@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataSource name="Sqlite (Xerial) - test.db">
+  <database-model serializer="dbm" rdbms="SQLITE" format-version="2.6">
+    <schema id="1">
+      <visible>1</visible>
+    </schema>
+    <table id="2" parent="1" name="authors"/>
+    <table id="3" parent="1" name="file_contents"/>
+    <table id="4" parent="1" name="file_metadata"/>
+    <table id="5" parent="1" name="folder_file_contents"/>
+    <table id="6" parent="1" name="folder_folder_contents"/>
+    <table id="7" parent="1" name="folder_metadata"/>
+    <table id="8" parent="1" name="schema_version"/>
+    <table id="9" parent="1" name="session_data"/>
+    <table id="10" parent="1" name="users"/>
+    <column id="11" parent="2" name="id">
+      <data-type>INTEGER(0,-1)|4</data-type>
+    </column>
+    <column id="12" parent="2" name="first_name">
+      <mandatory>1</mandatory>
+      <data-type>VARCHAR(255)(0,-1)|12</data-type>
+    </column>
+    <column id="13" parent="2" name="last_name">
+      <mandatory>1</mandatory>
+      <data-type>VARCHAR(255)(0,-1)|12</data-type>
+    </column>
+    <key id="14" parent="2">
+      <columns>id</columns>
+      <primary>1</primary>
+    </key>
+    <column id="15" parent="3" name="file_id">
+      <data-type>INTEGER(8)(0,-1)|4</data-type>
+    </column>
+    <column id="16" parent="3" name="contents">
+      <data-type>BLOB(0,-1)|12</data-type>
+    </column>
+    <key id="17" parent="3">
+      <columns>file_id</columns>
+      <primary>1</primary>
+    </key>
+    <foreign-key id="18" parent="3" name="#FAKE_file_contents_1">
+      <name-surrogate>1</name-surrogate>
+      <columns>file_id</columns>
+      <deferrable>1</deferrable>
+      <initially-deferred>1</initially-deferred>
+      <ref-key>~.file_metadata.#1</ref-key>
+      <cascade-update-rule>no_action</cascade-update-rule>
+      <cascade-delete-rule>no_action</cascade-delete-rule>
+    </foreign-key>
+    <column id="19" parent="4" name="file_id">
+      <data-type>INTEGER(8)(0,-1)|4</data-type>
+    </column>
+    <column id="20" parent="4" name="name">
+      <data-type>TEXT(0,-1)|12</data-type>
+    </column>
+    <column id="21" parent="4" name="path_lower">
+      <data-type>TEXT(0,-1)|12</data-type>
+    </column>
+    <column id="22" parent="4" name="path_display">
+      <data-type>TEXT(0,-1)|12</data-type>
+    </column>
+    <column id="23" parent="4" name="enclosing_folder_id">
+      <data-type>INTEGER(8)(0,-1)|4</data-type>
+    </column>
+    <column id="24" parent="4" name="size">
+      <data-type>INTEGER(8)(0,-1)|4</data-type>
+    </column>
+    <column id="25" parent="4" name="server_created_at">
+      <data-type>TEXT(0,-1)|12</data-type>
+    </column>
+    <column id="26" parent="4" name="server_changed_at">
+      <data-type>TEXT(0,-1)|12</data-type>
+    </column>
+    <column id="27" parent="4" name="owner_id">
+      <data-type>INTEGER(0,-1)|4</data-type>
+    </column>
+    <key id="28" parent="4">
+      <columns>file_id</columns>
+      <primary>1</primary>
+    </key>
+    <foreign-key id="29" parent="4" name="#FAKE_file_metadata_2">
+      <name-surrogate>1</name-surrogate>
+      <columns>enclosing_folder_id</columns>
+      <deferrable>1</deferrable>
+      <initially-deferred>1</initially-deferred>
+      <ref-key>~.folder_metadata.#1</ref-key>
+      <cascade-update-rule>no_action</cascade-update-rule>
+      <cascade-delete-rule>no_action</cascade-delete-rule>
+    </foreign-key>
+    <foreign-key id="30" parent="4" name="#FAKE_file_metadata_1">
+      <name-surrogate>1</name-surrogate>
+      <columns>owner_id</columns>
+      <deferrable>1</deferrable>
+      <initially-deferred>1</initially-deferred>
+      <ref-key>~.users.#1</ref-key>
+      <cascade-update-rule>no_action</cascade-update-rule>
+      <cascade-delete-rule>no_action</cascade-delete-rule>
+    </foreign-key>
+    <column id="31" parent="5" name="parent_folder_id">
+      <data-type>INTEGER(8)(0,-1)|4</data-type>
+    </column>
+    <column id="32" parent="5" name="contained_file_id">
+      <data-type>INTEGER(8)(0,-1)|4</data-type>
+    </column>
+    <index id="33" parent="5" name="sqlite_autoindex_folder_file_contents_1">
+      <name-surrogate>1</name-surrogate>
+      <columns>parent_folder_id
+contained_file_id</columns>
+      <desc-columns></desc-columns>
+      <unique>1</unique>
+    </index>
+    <key id="34" parent="5">
+      <columns>contained_file_id</columns>
+      <primary>1</primary>
+    </key>
+    <foreign-key id="35" parent="5" name="#FAKE_folder_file_contents_2">
+      <name-surrogate>1</name-surrogate>
+      <columns>parent_folder_id</columns>
+      <deferrable>1</deferrable>
+      <initially-deferred>1</initially-deferred>
+      <ref-key>~.folder_metadata.#1</ref-key>
+      <cascade-update-rule>no_action</cascade-update-rule>
+      <cascade-delete-rule>no_action</cascade-delete-rule>
+    </foreign-key>
+    <foreign-key id="36" parent="5" name="#FAKE_folder_file_contents_1">
+      <name-surrogate>1</name-surrogate>
+      <columns>contained_file_id</columns>
+      <deferrable>1</deferrable>
+      <initially-deferred>1</initially-deferred>
+      <ref-key>~.file_metadata.#1</ref-key>
+      <cascade-update-rule>no_action</cascade-update-rule>
+      <cascade-delete-rule>no_action</cascade-delete-rule>
+    </foreign-key>
+    <column id="37" parent="6" name="parent_folder_id">
+      <data-type>INTEGER(8)(0,-1)|4</data-type>
+    </column>
+    <column id="38" parent="6" name="contained_folder_id">
+      <data-type>INTEGER(8)(0,-1)|4</data-type>
+    </column>
+    <index id="39" parent="6" name="sqlite_autoindex_folder_folder_contents_1">
+      <name-surrogate>1</name-surrogate>
+      <columns>parent_folder_id
+contained_folder_id</columns>
+      <desc-columns></desc-columns>
+      <unique>1</unique>
+    </index>
+    <key id="40" parent="6">
+      <columns>contained_folder_id</columns>
+      <primary>1</primary>
+    </key>
+    <foreign-key id="41" parent="6" name="#FAKE_folder_folder_contents_2">
+      <name-surrogate>1</name-surrogate>
+      <columns>parent_folder_id</columns>
+      <deferrable>1</deferrable>
+      <initially-deferred>1</initially-deferred>
+      <ref-key>~.folder_metadata.#1</ref-key>
+      <cascade-update-rule>no_action</cascade-update-rule>
+      <cascade-delete-rule>no_action</cascade-delete-rule>
+    </foreign-key>
+    <foreign-key id="42" parent="6" name="#FAKE_folder_folder_contents_1">
+      <name-surrogate>1</name-surrogate>
+      <columns>contained_folder_id</columns>
+      <deferrable>1</deferrable>
+      <initially-deferred>1</initially-deferred>
+      <ref-key>~.folder_metadata.#1</ref-key>
+      <cascade-update-rule>no_action</cascade-update-rule>
+      <cascade-delete-rule>no_action</cascade-delete-rule>
+    </foreign-key>
+    <column id="43" parent="7" name="folder_id">
+      <data-type>INTEGER(8)(0,-1)|4</data-type>
+    </column>
+    <column id="44" parent="7" name="name">
+      <data-type>TEXT(0,-1)|12</data-type>
+    </column>
+    <column id="45" parent="7" name="path_lower">
+      <data-type>TEXT(0,-1)|12</data-type>
+    </column>
+    <column id="46" parent="7" name="path_display">
+      <data-type>TEXT(0,-1)|12</data-type>
+    </column>
+    <column id="47" parent="7" name="parent_folder_id">
+      <data-type>INTEGER(8)(0,-1)|4</data-type>
+    </column>
+    <column id="48" parent="7" name="server_created_at">
+      <data-type>TEXT(0,-1)|12</data-type>
+    </column>
+    <column id="49" parent="7" name="owner_id">
+      <data-type>INTEGER(0,-1)|4</data-type>
+    </column>
+    <key id="50" parent="7">
+      <columns>folder_id</columns>
+      <primary>1</primary>
+    </key>
+    <foreign-key id="51" parent="7" name="#FAKE_folder_metadata_2">
+      <name-surrogate>1</name-surrogate>
+      <columns>parent_folder_id</columns>
+      <deferrable>1</deferrable>
+      <initially-deferred>1</initially-deferred>
+      <ref-key>#1</ref-key>
+      <cascade-update-rule>no_action</cascade-update-rule>
+      <cascade-delete-rule>no_action</cascade-delete-rule>
+    </foreign-key>
+    <foreign-key id="52" parent="7" name="#FAKE_folder_metadata_1">
+      <name-surrogate>1</name-surrogate>
+      <columns>owner_id</columns>
+      <deferrable>1</deferrable>
+      <initially-deferred>1</initially-deferred>
+      <ref-key>~.users.#1</ref-key>
+      <cascade-update-rule>no_action</cascade-update-rule>
+      <cascade-delete-rule>no_action</cascade-delete-rule>
+    </foreign-key>
+    <column id="53" parent="8" name="installed_rank">
+      <mandatory>1</mandatory>
+      <data-type>INT(0,-1)|4</data-type>
+    </column>
+    <column id="54" parent="8" name="version">
+      <data-type>VARCHAR(50)(0,-1)|12</data-type>
+    </column>
+    <column id="55" parent="8" name="description">
+      <mandatory>1</mandatory>
+      <data-type>VARCHAR(200)(0,-1)|12</data-type>
+    </column>
+    <column id="56" parent="8" name="type">
+      <mandatory>1</mandatory>
+      <data-type>VARCHAR(20)(0,-1)|12</data-type>
+    </column>
+    <column id="57" parent="8" name="script">
+      <mandatory>1</mandatory>
+      <data-type>VARCHAR(1000)(0,-1)|12</data-type>
+    </column>
+    <column id="58" parent="8" name="checksum">
+      <data-type>INT(0,-1)|4</data-type>
+    </column>
+    <column id="59" parent="8" name="installed_by">
+      <mandatory>1</mandatory>
+      <data-type>VARCHAR(100)(0,-1)|12</data-type>
+    </column>
+    <column id="60" parent="8" name="installed_on">
+      <mandatory>1</mandatory>
+      <data-type>TEXT(0,-1)|12</data-type>
+      <default-expression>&apos;strftime(&apos;%Y-%m-%d %H:%M:%f&apos;,&apos;now&apos;)&apos;</default-expression>
+    </column>
+    <column id="61" parent="8" name="execution_time">
+      <mandatory>1</mandatory>
+      <data-type>INT(0,-1)|4</data-type>
+    </column>
+    <column id="62" parent="8" name="success">
+      <mandatory>1</mandatory>
+      <data-type>BOOLEAN(0,-1)|4</data-type>
+    </column>
+    <index id="63" parent="8" name="schema_version_s_idx">
+      <columns>success</columns>
+      <desc-columns></desc-columns>
+      <unique>1</unique>
+    </index>
+    <key id="64" parent="8">
+      <columns>installed_rank</columns>
+      <primary>1</primary>
+    </key>
+    <column id="65" parent="9" name="session_id">
+      <data-type>TEXT PRIMARY_KEY(0,-1)|12</data-type>
+    </column>
+    <column id="66" parent="9" name="user_id">
+      <data-type>INTEGER(0,-1)|4</data-type>
+    </column>
+    <column id="67" parent="9" name="last_accessed">
+      <data-type>TEXT(0,-1)|12</data-type>
+    </column>
+    <key id="68" parent="9">
+      <columns>user_id</columns>
+      <primary>1</primary>
+    </key>
+    <foreign-key id="69" parent="9" name="#FAKE_session_data_1">
+      <name-surrogate>1</name-surrogate>
+      <columns>user_id</columns>
+      <deferrable>1</deferrable>
+      <initially-deferred>1</initially-deferred>
+      <ref-key>~.users.#1</ref-key>
+      <cascade-update-rule>no_action</cascade-update-rule>
+      <cascade-delete-rule>no_action</cascade-delete-rule>
+    </foreign-key>
+    <column id="70" parent="10" name="id">
+      <data-type>INTEGER(0,-1)|4</data-type>
+    </column>
+    <column id="71" parent="10" name="user_name">
+      <data-type>VARCHAR(100)(0,-1)|12</data-type>
+    </column>
+    <column id="72" parent="10" name="display_name">
+      <data-type>VARCHAR(100)(0,-1)|12</data-type>
+    </column>
+    <column id="73" parent="10" name="hashed_password">
+      <data-type>VARCHAR(100)(0,-1)|12</data-type>
+    </column>
+    <key id="74" parent="10">
+      <columns>id</columns>
+      <primary>1</primary>
+    </key>
+  </database-model>
+</dataSource>
