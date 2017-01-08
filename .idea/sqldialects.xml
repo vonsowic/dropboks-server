@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SqlDialectMappings">
+    <file url="file://$PROJECT_DIR$/src/main/resources/db/migration/V10_1__add_missing_folder_metadata_constraints.sql" dialect="SQLite" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/db/migration/V10_2__add_missing_file_metadata_contraints.sql" dialect="SQLite" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/db/migration/V1__author.sql" dialect="SQLite" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/db/migration/V3__create_users_table.sql" dialect="SQLite" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/db/migration/V4__create_file_metadata.sql" dialect="SQLite" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/db/migration/V5__create_folder_metadata.sql" dialect="SQLite" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/db/migration/V6__create_folder_file_content.sql" dialect="SQLite" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/db/migration/V7__create_folder_folder_contents.sql" dialect="SQLite" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/db/migration/V8__create_file_contents.sql" dialect="SQLite" />
+    <file url="file://$PROJECT_DIR$/src/main/resources/db/migration/V9__create_session_data_table.sql" dialect="SQLite" />
+  </component>
+</project>

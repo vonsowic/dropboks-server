@@ -5,7 +5,11 @@ import static spark.Spark.*;
 
 import java.util.List;
 
+import dropboks.dao.DirectoryMetadataDAO;
+import dropboks.dao.UsersDAO;
+import dropboks.model.User;
 import org.jooq.DSLContext;
+import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
@@ -13,13 +17,9 @@ import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
 
-import pl.edu.agh.kis.florist.db.tables.pojos.Authors;
 import pl.edu.agh.kis.florist.db.tables.pojos.FileContents;
 import pl.edu.agh.kis.florist.db.tables.pojos.FolderFileContents;
-import pl.edu.agh.kis.florist.db.tables.pojos.Users;
-import pl.edu.agh.kis.florist.db.tables.records.AuthorsRecord;
 import pl.edu.agh.kis.florist.db.tables.records.FileContentsRecord;
-import pl.edu.agh.kis.florist.db.tables.records.UsersRecord;
 import spark.Request;
 import spark.ResponseTransformer;
 
@@ -29,17 +29,25 @@ public class App {
 	
 	public static void main(String[] args) {
 		final int CREATED = 201;
-		final String AUTHORS_PATH = "/authors";
+		final String USERS_PATH = "/users";
 
 		final Gson gson = new Gson();
 		final ResponseTransformer json = gson::toJson;
 		final String DB_URL = "jdbc:sqlite:test.db";
+
+        DropboksController controller = new DropboksController(new UsersDAO(), new DirectoryMetadataDAO());
+
 		
 		port(4567);
-		
-		before("/*/", (req, res) -> { 
-		    info(req);
-		});
+
+
+        before((request, response) -> {
+            boolean authenticated = true;
+            // ... check if authenticated
+            if (!authenticated) {
+                halt(401, "You are not welcome here");
+            }
+        });
 
         // ??
         get("/files/*/list_folder_content", (request,response) -> {
@@ -70,11 +78,14 @@ public class App {
         }));
 
         get("/files/*/get_meta_data", ((request, response) -> {
-            try(DSLContext create = DSL.using(DB_URL)) {
-
-                return true;
-            }
+            return null;
         }));
+
+        get("/files/*/get_meta_data/:userid", ((request, response) -> controller.getDirectoryByUserId(request, response)));
+
+        get("/files/get_meta_data/:userid", ((request, response) -> controller.getDirectoryByUserId(request, response)));
+
+        get("/files/get_meta_data/:dir_id", ((request, response) -> controller.getDirectoryByUserId(request, response)));
 
         put("/files/*/rename", ((request, response) -> {
             try(DSLContext create = DSL.using(DB_URL)) {
@@ -97,37 +108,30 @@ public class App {
             }
         }));
 
-
-        put("/files/*/create_directory", ((request, response) -> {
-            try(DSLContext create = DSL.using(DB_URL)) {
-
-                return true;
+        put("/files/*/create_directory", ((request, response) -> controller.createDirectory(request, response)));
+/*
+        //before creating new user, chech if there hasnt already been created user with the same name
+        before(USERS_PATH + "/create_user", (request, response) -> {
+            User user = gson.fromJson(request.body(), User.class);
+            try {
+               controller.usersRepo.loadUserByName(user.getUserName());
+            }  catch (Exception e){
+                System.out.println("INNY WYJATEK !!!!!!!!!!!!!!!!!!!!!!");
+                halt(450, "User aleready exists");
             }
-        }));
 
 
+        });
+*/
         // creating new user
-        post("/users/create_user", (request,response) -> {
-            try(DSLContext create = DSL.using(DB_URL)) {
-                Users user = gson.fromJson(request.body(),Users.class);
-                UsersRecord record = create.newRecord(USERS);
-                record.from(user);
-                record.store();
-                response.status(CREATED);
-                return record.into(Users.class);
-            }
-        },json);
+        post(USERS_PATH + "/create_user", (request,response) -> controller.createNewUser(request, response),json);
 
         // get all users
-        get("/users", (request,response) -> {
-            try(DSLContext create = DSL.using(DB_URL)) {
-                int numberOfRows = 100;
-                List<Users> users = create.selectFrom(USERS).limit(numberOfRows).fetchInto(Users.class);
-                return users;
-            }
-        },json);
+        get(USERS_PATH, (request,response) -> controller.getAllUsers(),json);
 
-        get("/users/access", (request,response) -> {
+        get(USERS_PATH + "/:user_name", ((request, response) -> controller.getUserByName(request, response)), json);
+
+        get(USERS_PATH + "/access", (request,response) -> {
             try(DSLContext create = DSL.using(DB_URL)) {
 
                 return true;
