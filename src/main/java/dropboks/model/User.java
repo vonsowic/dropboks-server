@@ -1,5 +1,6 @@
 package dropboks.model;
 
+import dropboks.App;
 import pl.edu.agh.kis.florist.db.tables.pojos.Users;
 
 /**
@@ -23,4 +24,13 @@ public class User extends Users {
     }
 
     private static final long serialVersionUID = -7821816371758851390L;
+
+    public User getUserWithHashedPassword() {
+        return new User(
+                this.getId(),
+                this.getUserName(),
+                this.getDisplayName(),
+                App.createHashedPassword(this.getHashedPassword())
+        );
+    }
 }

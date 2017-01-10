@@ -14,8 +14,9 @@ import static pl.edu.agh.kis.florist.db.Tables.USERS;
 /**
  * Created by miwas on 08.01.17.
  */
-public class UsersDAO {
+public class UsersDAO /*extends DAOImpl<UsersRecord, Users, Integer> it could be quite a nice solution, but it seems to be inconsistent with its documentation :(*/ {
     private final String DB_URL = "jdbc:sqlite:test.db";
+
 
     public List<User> loadAllUsers() {
         try (DSLContext create = DSL.using(DB_URL)) {
@@ -23,21 +24,27 @@ public class UsersDAO {
                     create.select(USERS.fields())
                             .from(USERS)
                             .fetchInto(User.class);
+
             return users;
         }
     }
 
-    public User loadUserByName(String name) throws DataAccessException{
+    public boolean exists(String name){
         try (DSLContext create = DSL.using(DB_URL)) {
-            UsersRecord record = null;
-            try {
-                record = create.selectFrom(USERS).where(USERS.USER_NAME.equal(name)).fetchOne();
-            } catch (DataAccessException e){
-                throw e;
-            }
-            User user = record.into(User.class);
-            return user;
+            return create.fetchExists(create.selectFrom(USERS).where(USERS.USER_NAME.equal(name)));
         }
+    }
+
+    public User loadUserByName(String name) throws DataAccessException{
+        User user = null;
+        try (DSLContext create = DSL.using(DB_URL)) {
+            UsersRecord record = create.selectFrom(USERS).where(USERS.USER_NAME.equal(name)).fetchOne();
+            user = record.into(User.class);
+
+        } catch (DataAccessException e){
+            e.printStackTrace();
+        }
+        return user;
     }
 
     public User loadUserOfId(int userId) {
@@ -59,5 +66,18 @@ public class UsersDAO {
     public List<User> store(List<User> users) {
         //in the future can be optimized into single db query
         return users.stream().map(this::store).collect(Collectors.toList());
+    }
+
+    public Integer getId(String userName) {
+        Integer id = null;
+        try {
+            User user = loadUserByName(userName);
+            id = user.getId();
+        } catch (DataAccessException e){
+            e.printStackTrace();
+        } catch (NullPointerException e){
+            e.printStackTrace();
+        }
+        return id;
     }
 }

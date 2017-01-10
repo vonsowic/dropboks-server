@@ -18,7 +18,8 @@ public class DirectoryMetadata extends FolderMetadata {
         super(folderId, name, null, null, null, serverCreatedAt, ownerId);
     }
 
-    public DirectoryMetadata(String name, String serverCreatedAt, Integer ownerId) {
-        super(null, name, null, null, null, serverCreatedAt, ownerId);
+    public DirectoryMetadata(Integer folderId, String name, String pathLower, String pathDisplay, String serverCreatedAt, Integer ownerId) {
+        super(folderId, name, pathLower, pathDisplay, null, serverCreatedAt, ownerId);
     }
+
 }
