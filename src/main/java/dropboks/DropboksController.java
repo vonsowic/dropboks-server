@@ -4,22 +4,19 @@ import com.google.gson.Gson;
 import dropboks.dao.DirectoryMetadataDAO;
 import dropboks.dao.FileDAO;
 import dropboks.dao.UsersDAO;
-import dropboks.exceptions.ParameterFormatException;
 import dropboks.model.DirectoryMetadata;
 import dropboks.model.FileContent;
 import dropboks.model.User;
 import org.jooq.exception.DataAccessException;
-import org.jooq.tools.StringUtils;
 
 import pl.edu.agh.kis.florist.db.tables.pojos.FileMetadata;
 import spark.Request;
 import spark.Response;
 
-import java.sql.Blob;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.List;
+import static pl.edu.agh.kis.florist.db.tables.FolderMetadata.FOLDER_METADATA;
+import static pl.edu.agh.kis.florist.db.tables.Users.USERS;
+
+
 
 import static spark.Spark.halt;
 
@@ -46,11 +43,13 @@ public class DropboksController {
     private UsersDAO usersRepo;
     private DirectoryMetadataDAO dirMetaRepo;
     private FileDAO filesRepo;
-
     public DropboksController() {
         //Configuration configuration = new DefaultConfiguration().set(DriverManager.getConnection(DB_URL)).set(SQLDialect.SQLITE);
-        this.usersRepo = new UsersDAO();
-        this.dirMetaRepo = new DirectoryMetadataDAO(this);
+        this.usersRepo = new UsersDAO(User.class, USERS);
+        this.dirMetaRepo = new DirectoryMetadataDAO(
+                DirectoryMetadata.class,
+                FOLDER_METADATA,
+                this);
         this.filesRepo = new FileDAO();
     }
 
@@ -66,7 +65,7 @@ public class DropboksController {
         }
     }
 
-    public User createNewUser(Request request, Response response){
+    public Object createNewUser(Request request, Response response){
 
         User tmp = gson.fromJson(request.body(), User.class);
         User potentialNewUser = tmp.getUserWithHashedPassword();
@@ -165,7 +164,7 @@ public class DropboksController {
             return "Path doesnt exists";
         }
 
-        DirectoryMetadata result = dirMetaRepo.loadDirOfPath(path);
+        DirectoryMetadata result = dirMetaRepo.loadOfPath(path);
         response.status(OK);
         return result;
     }
