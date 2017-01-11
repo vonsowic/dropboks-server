@@ -1,18 +1,20 @@
 package dropboks;
 
 import com.google.gson.Gson;
-import dropboks.dao.DirectoryMetadataDAO;
-import dropboks.dao.FileDAO;
-import dropboks.dao.UsersDAO;
+import dropboks.dao.*;
+import dropboks.model.DirectoryFileContest;
 import dropboks.model.DirectoryMetadata;
 import dropboks.model.FileContent;
+import dropboks.model.FileMetadata;
 import dropboks.model.User;
 import org.jooq.exception.DataAccessException;
 
-import pl.edu.agh.kis.florist.db.tables.pojos.FileMetadata;
 import spark.Request;
 import spark.Response;
 
+import static pl.edu.agh.kis.florist.db.tables.FileMetadata.FILE_METADATA;
+import static pl.edu.agh.kis.florist.db.tables.FileContents.FILE_CONTENTS;
+import static pl.edu.agh.kis.florist.db.tables.FolderFileContents.FOLDER_FILE_CONTENTS;
 import static pl.edu.agh.kis.florist.db.tables.FolderMetadata.FOLDER_METADATA;
 import static pl.edu.agh.kis.florist.db.tables.Users.USERS;
 
@@ -42,15 +44,35 @@ public class DropboksController {
 
     private UsersDAO usersRepo;
     private DirectoryMetadataDAO dirMetaRepo;
-    private FileDAO filesRepo;
+    private DirectoryFileContestDAO dirFileContRepo;
+    private FileMetadataDAO filesMetaRepo;
+    private FileContentDAO filesContRepo;
+
     public DropboksController() {
         //Configuration configuration = new DefaultConfiguration().set(DriverManager.getConnection(DB_URL)).set(SQLDialect.SQLITE);
-        this.usersRepo = new UsersDAO(User.class, USERS);
+        this.usersRepo = new UsersDAO(
+                User.class,
+                USERS);
+
         this.dirMetaRepo = new DirectoryMetadataDAO(
                 DirectoryMetadata.class,
                 FOLDER_METADATA,
                 this);
-        this.filesRepo = new FileDAO();
+
+        this.filesMetaRepo = new FileMetadataDAO(
+                FileMetadata.class,
+                FILE_METADATA
+        );
+
+        this.filesContRepo = new FileContentDAO(
+                FileContent.class,
+                FILE_CONTENTS
+        );
+
+        this.dirFileContRepo = new DirectoryFileContestDAO(
+                DirectoryFileContest.class,
+                FOLDER_FILE_CONTENTS
+        );
     }
 
     //TODO
@@ -171,24 +193,21 @@ public class DropboksController {
 
     public Object uploadFile(Request request, Response response) {
         String pathToFile = request.queryMap().get("path").value();
-        //ArrayList<String> listPath = dirMetaRepo.getListPath(pathToFile);
 
         TransferFile tmp = gson.fromJson(request.body(), TransferFile.class);
 
         FileMetadata fileMetadata = new FileMetadata(
-                filesRepo.generateId(),
+                //filesMetaRepo.generateId(),
                 PathResolver.getUserName(pathToFile),
                 pathToFile.toLowerCase(),
                 pathToFile,
                 dirMetaRepo.getId(PathResolver.getParentPath(pathToFile)),
                 tmp.size(),
                 getServerName(),
-                null,
                 usersRepo.getId(PathResolver.getUserName(pathToFile))
                 );
-        FileContent fileContent = new FileContent(fileMetadata.getFileId(), tmp.getBytes());
-
-        FileMetadata result = filesRepo.store(fileMetadata, fileContent);
+        FileContent fileContent = new FileContent(tmp.getBytes());
+        FileMetadata result = filesMetaRepo.store(fileMetadata);
         response.status(CREATED);
 
         return fileMetadata;

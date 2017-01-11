@@ -56,7 +56,7 @@ public class DirectoryMetadataDAO extends DAO<DirectoryMetadata, FolderMetadataR
 
 
             newDirectory = new DirectoryMetadata(
-                    this.generateId(),
+                   // this.generateId(),
                     name,
                     path.toLowerCase(),
                     path,
@@ -84,7 +84,7 @@ public class DirectoryMetadataDAO extends DAO<DirectoryMetadata, FolderMetadataR
     public DirectoryMetadata createDirectoryForUser(User user) {
         DirectoryMetadata usersDirectory =
                 new DirectoryMetadata(
-                        this.generateId(),
+                        //this.generateId(),
                         user.getUserName(),
                         user.getUserName().toLowerCase(),
                         user.getUserName(),

@@ -15,22 +15,9 @@ import static pl.edu.agh.kis.florist.db.Tables.USERS;
  * Created by miwas on 08.01.17.
  */
 public class UsersDAO extends DAO<User, UsersRecord> {
-    private final String DB_URL = "jdbc:sqlite:test.db";
 
     public UsersDAO(Class type, TableImpl table) {
         super(type, table);
-    }
-
-
-    public List<User> loadAllUsers() {
-        try (DSLContext create = DSL.using(DB_URL)) {
-            List<User> users =
-                    create.select(USERS.fields())
-                            .from(USERS)
-                            .fetchInto(User.class);
-
-            return users;
-        }
     }
 
     @Override
@@ -47,4 +34,16 @@ public class UsersDAO extends DAO<User, UsersRecord> {
     public Integer getIdOfModel(User object) {
         return object.getId();
     }
+
+    public List<User> loadAllUsers() {
+        try (DSLContext create = DSL.using(DB_URL)) {
+            List<User> users =
+                    create.select(USERS.fields())
+                            .from(USERS)
+                            .fetchInto(User.class);
+
+            return users;
+        }
+    }
+
 }

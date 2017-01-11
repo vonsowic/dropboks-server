@@ -22,4 +22,12 @@ public class DirectoryMetadata extends FolderMetadata {
         super(folderId, name, pathLower, pathDisplay, null, serverCreatedAt, ownerId);
     }
 
+    public DirectoryMetadata(String name, String pathLower, String pathDisplay, String serverCreatedAt, Integer ownerId) {
+        super(null, name, pathLower, pathDisplay, null, serverCreatedAt, ownerId);
+    }
+
+    public DirectoryMetadata(String name, String pathLower, String pathDisplay, Integer parentFolderId, String serverCreatedAt, Integer ownerId) {
+        super(null, name, pathLower, pathDisplay, parentFolderId, serverCreatedAt, ownerId);
+    }
+
 }
