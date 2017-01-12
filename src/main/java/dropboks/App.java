@@ -26,25 +26,25 @@ public class App {
 
         before(controller::authenticate);
 
-        get(FILES_PATH + "/*/list_folder_content", (request,response) -> null,json);
+        get(FILES_PATH + "/*/list_folder_content", controller::getListFolderContent,json);
 
         post(FILES_PATH + "/upload", controller::uploadFile,json);
 
-        get(FILES_PATH + "/*/download", ((request, response) -> null));
+        get(FILES_PATH + "/*/download", controller::download, json);
 
-        get(FILES_PATH + "/*/get_meta_data", (controller::getMetaData));
+        get(FILES_PATH + "/*/get_meta_data", controller::getMetaData, json);
 
-        put(FILES_PATH + "/*/rename", (controller::renameFile));
+        put(FILES_PATH + "/*/rename", controller::rename, json);
 
-        delete(FILES_PATH + "/*/delete", (controller::remove));
+        delete(FILES_PATH + "/*/delete", controller::remove, json);
 
-        put(FILES_PATH + "/*/move", ((request, response) -> null));
+        put(FILES_PATH + "/*/move", controller::move, json);
 
-        put(FILES_PATH + "/*/create_directory", (controller::createDirectory));
+        put(FILES_PATH + "/*/create_directory", controller::createDirectory, json);
 
         post(USERS_PATH + "/create_user", controller::createNewUser, json);
 
-        get(USERS_PATH + "/access", (request,response) -> null,json);
+        get(USERS_PATH + "/access", controller::access, json);
 	}
 
 

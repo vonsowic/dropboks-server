@@ -39,8 +39,14 @@ public class DropboksController {
     private static final int NOT_FOUND = 404;
     private static final int INVALID_PARAMETER = 405;
 
+    private static final String path_doesnt_exist = "Path doesn't exist";
+    private static final String already_exists = "Already exists";
+    private static final String success = "Success";
+    private static final String error = "Error :(";
+
+
+
     private final Gson gson = new Gson();
-    //final String DB_URL = "jdbc:sqlite:test.db";
 
     private UsersDAO usersRepo;
     private DirectoryMetadataDAO dirMetaRepo;
@@ -61,7 +67,8 @@ public class DropboksController {
 
         this.filesMetaRepo = new FileMetadataDAO(
                 FileMetadata.class,
-                FILE_METADATA
+                FILE_METADATA,
+                this
         );
 
         this.filesContRepo = new FileContentDAO(
@@ -75,7 +82,7 @@ public class DropboksController {
         );
     }
 
-    //TODO
+    //TODO: all
     public void authenticate(Request request, Response response) {
         // get session
         request.queryMap().get("session").value();
@@ -89,18 +96,22 @@ public class DropboksController {
 
     public Object createNewUser(Request request, Response response){
 
-        User tmp = gson.fromJson(request.body(), User.class);
-        User potentialNewUser = tmp.getUserWithHashedPassword();
+        User potentialNewUser = gson.fromJson(request.body(), User.class);
+        potentialNewUser = potentialNewUser.getUserWithHashedPassword();
 
-        if ( usersRepo.exists(potentialNewUser.getUserName())){
+        if ( usersRepo.existsBySecondId(potentialNewUser.getUserName())){
             response.status(ALREADY_EXISTS);
-            return null;
+            return already_exists;
         }
 
         User result = null;
         try {
-            result = usersRepo.store( potentialNewUser );
+            result = usersRepo.store(potentialNewUser);
+            //result = usersRepo.findById(usersRepo.getId(potentialNewUser));
             dirMetaRepo.createDirectoryForUser(result);
+            //potentialNewUser = usersRepo.loadOfPath(potentialNewUser.getUserName());
+            //usersRepo.hashPassword(potentialNewUser);
+
         } catch (DataAccessException e){
             e.printStackTrace();
         }
@@ -112,10 +123,9 @@ public class DropboksController {
     public Object createDirectory(Request request, Response response) {
         String path = request.splat()[0];
 
-        if ( dirMetaRepo.exists(path)){
-            // for some reason 404 is returned ??
+        if ( dirMetaRepo.existsBySecondId(path)){
             response.status(ALREADY_EXISTS);
-            return "Already exists";
+            return already_exists;
         }
 
         DirectoryMetadata result = dirMetaRepo.store(path);
@@ -123,94 +133,125 @@ public class DropboksController {
         return result;
     }
 
-    // TODO: do poprawy
-    public Object renameFile(Request request, Response response) {
-        final String path = request.splat()[0]; // path to old directory
-        //ArrayList<String> listPath = dirMetaRepo.getListPath(path);
+    public Object rename(Request request, Response response) {
+        final String path = request.splat()[0]; // path to old directory or file
+        String newName = request.queryMap().get("new_path").value(); // path to new directory
 
-        if ( !dirMetaRepo.exists(path)){
+        MetadataDAO repo = resolveMetaType(path);
+        if ( repo == null){
             response.status(INVALID_PARAMETER);
-            return null;
-        }
-/*
-        String newName, newPath;
-        if ( listPath.size()>1){
-            newName = listPath.get(listPath.size()-1);
-            newPath = StringUtils.join(listPath.subList(0, listPath.size()-2), "/");
-        } else {
-            response.status(INVALID_PARAMETER);
-            return null;
+            return path_doesnt_exist;
         }
 
-        DirectoryMetadata tmp = dirMetaRepo.loadDirOfPath(path);
-        DirectoryMetadata directory = new DirectoryMetadata(
-                tmp.getFolderId(),
-                newName,
-                (newPath+"/"+newName).toLowerCase(),
-                newPath+"/"+newName,
-                tmp.getServerCreatedAt(),
-                tmp.getOwnerId());
+        repo.rename(path, newName);
 
-        dirMetaRepo.remove(path);
-        dirMetaRepo.store(directory);
-        */
         response.status(CREATED);
         return "Hello world";
     }
 
     public Object remove(Request request, Response response) {
-        final String path = request.splat()[0]; // path to directory
-
-        if ( !dirMetaRepo.exists(path)){
-            response.status(INVALID_PARAMETER);
-            return INVALID_PARAMETER;
-        }
+        final String path = request.splat()[0]; // path to directory or file
 
         // disable removing main directory
         if ( PathResolver.isHomeDirectory(path)){
             response.status(INVALID_PARAMETER);
-            return "Error";
+            return "Can't remove home directory";
         }
 
-        dirMetaRepo.remove(path);
+        MetadataDAO repo = resolveMetaType(path);
+        if ( repo == null){
+            response.status(INVALID_PARAMETER);
+            return path_doesnt_exist;
+        }
+
+        repo.delete(path);
         response.status(SUCCESSFUL_DELETE_OPERATION);
-        return "Success";
+        return success;
     }
 
-    // TODO: dodac obsluge plikow
     public Object getMetaData(Request request, Response response) {
         final String path = request.splat()[0]; // path to directory
 
-        if ( !dirMetaRepo.exists(path)){
+        // Resolve type of file
+        MetadataDAO repo = resolveMetaType(path);
+        if ( repo == null){
             response.status(INVALID_PARAMETER);
-            return "Path doesnt exists";
+            return path_doesnt_exist;
         }
 
-        DirectoryMetadata result = dirMetaRepo.loadOfPath(path);
         response.status(OK);
-        return result;
+        return repo.getMetaData(path);
     }
 
     public Object uploadFile(Request request, Response response) {
         String pathToFile = request.queryMap().get("path").value();
 
+        if ( !dirMetaRepo.existsBySecondId(PathResolver.getParentPath(pathToFile))
+            || filesMetaRepo.existsBySecondId(pathToFile)) {
+            response.status(INVALID_PARAMETER);
+            return error;
+        }
+
         TransferFile tmp = gson.fromJson(request.body(), TransferFile.class);
 
         FileMetadata fileMetadata = new FileMetadata(
-                //filesMetaRepo.generateId(),
+                filesMetaRepo.generateId(),
                 PathResolver.getUserName(pathToFile),
                 pathToFile.toLowerCase(),
                 pathToFile,
-                dirMetaRepo.getId(PathResolver.getParentPath(pathToFile)),
+                dirMetaRepo.getIdBySecondId(PathResolver.getParentPath(pathToFile)),
                 tmp.size(),
                 getServerName(),
-                usersRepo.getId(PathResolver.getUserName(pathToFile))
+                usersRepo.getIdBySecondId(PathResolver.getUserName(pathToFile))
                 );
-        FileContent fileContent = new FileContent(tmp.getBytes());
+
         FileMetadata result = filesMetaRepo.store(fileMetadata);
+
+        FileContent fileContent = new FileContent(filesContRepo.generateId(), tmp.getBytes());
+        filesContRepo.store(fileContent);
+
+        DirectoryFileContest directoryFileContest = new DirectoryFileContest(fileMetadata.getEnclosingFolderId(), fileMetadata.getOwnerId());
+        dirFileContRepo.store(directoryFileContest);
+
+
         response.status(CREATED);
 
         return fileMetadata;
+    }
+
+    // TODO: move content type
+    public Object move(Request request, Response response) {
+        final String path = request.splat()[0]; // path to directory or file
+        String newPath = request.queryMap().get("new_path").value(); // path to new directory
+
+        MetadataDAO repo = resolveMetaType(path);
+        if ( repo == null){
+            response.status(INVALID_PARAMETER);
+            return path_doesnt_exist;
+        }
+
+        if ( !repo.existsBySecondId(newPath)){
+            response.status(INVALID_PARAMETER);
+            return null;
+        }
+
+        response.status(OK);
+        return repo.move(path, newPath);
+    }
+
+    //TODO: all
+    public Object access(Request request, Response response) {
+        return null;
+    }
+
+    //TODO: all
+    public Object download(Request request, Response response) {
+        return null;
+    }
+
+    //TODO: all
+    public Object getListFolderContent(Request request, Response response) {
+        return null;
     }
 
     public UsersDAO getUsersRepository() {
@@ -225,4 +266,15 @@ public class DropboksController {
         return SERVER_NAME;
     }
 
+    public DirectoryFileContestDAO getDirectoryFileContentRepository() {
+        return dirFileContRepo;
+    }
+
+    public MetadataDAO resolveMetaType(String path){
+        if ( dirMetaRepo.existsBySecondId(path)){ // so its directory
+            return dirMetaRepo;
+        } else if (filesMetaRepo.existsBySecondId(path)) {
+            return filesMetaRepo;
+        } else return null;
+    }
 }

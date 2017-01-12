@@ -6,7 +6,7 @@ import pl.edu.agh.kis.florist.db.tables.pojos.Users;
 /**
  * Created by miwas on 08.01.17.
  */
-public class User extends Users {
+public class User extends Users implements Comparable<Users>{
     public User(Users user) {
         super(user);
     }
@@ -26,11 +26,28 @@ public class User extends Users {
     private static final long serialVersionUID = -7821816371758851390L;
 
     public User getUserWithHashedPassword() {
-        return new User(
-                this.getId(),
-                this.getUserName(),
-                this.getDisplayName(),
-                App.createHashedPassword(this.getHashedPassword())
-        );
+        if ( this.getId() != null) {
+            return new User(
+                    this.getId(),
+                    this.getUserName(),
+                    this.getDisplayName(),
+                    App.createHashedPassword(this.getHashedPassword())
+            );
+        } else {
+            return new User(
+                    this.getUserName(),
+                    this.getDisplayName(),
+                    App.createHashedPassword(this.getHashedPassword()
+                    ));
+        }
+    }
+
+    @Override
+    public int compareTo(Users o) {
+        if (this.getId() == o.getId())
+            return 0;
+        if (this.getId() > o.getId())
+            return 1;
+        else return  -1;
     }
 }

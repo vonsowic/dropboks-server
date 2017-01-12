@@ -1,31 +1,54 @@
 package dropboks.dao;
 
-import org.jooq.DSLContext;
-import org.jooq.TableField;
+import org.jooq.*;
 import org.jooq.exception.DataAccessException;
-import org.jooq.impl.DSL;
-import org.jooq.impl.TableImpl;
-import org.jooq.impl.UpdatableRecordImpl;
+import org.jooq.impl.*;
 
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Main class for data access objects. Gives CRUD and other cool elementary methods for database.
+ * SK - Second Key.
  * @author miwas
  * @version 1.0
+ * @see @https://www.jooq.org/doc/3.9/manual/sql-execution/daos/
+ * @see @https://www.jooq.org/javadoc/3.5.0/org/jooq/impl/DAOImpl.html
  */
-public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>> {
+public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
+        extends DAOImpl<Record, T, Integer> {
 
     /**
-     *
+     * Database Url for default configuration.
      */
     String DB_URL = "jdbc:sqlite:test.db";
-    private final Class<T> type;
-    private final TableImpl<Record> TABLE;
 
-    public DAO(Class<T> type, TableImpl<Record> table) {
+
+    /**
+     * Type of class representing records from database.
+     */
+    private final Class<T> type;
+
+
+    /**
+     * Reference to table in Database.
+     */
+    private final TableImpl<Record> TABLE;
+    private SK key;
+
+
+    protected DAO( Class<T> type, Table<Record> table) {
+        super(table, type);
         this.type = type;
-        this.TABLE = table;
+        TABLE = (TableImpl<Record>) table;
+
+        try {
+            this.setConfiguration(new DefaultConfiguration().set(DriverManager.getConnection(DB_URL)).set(SQLDialect.SQLITE));
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -37,27 +60,21 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>> {
     /**
      * @return Name (like DISPALAY_NAME or USER_NAME ) from Database.
      */
-    public abstract TableField<Record, String> getNameIdOfTableRecord();
-
-    /**
-     * Get id of model from database.
-     * @param object of class from package model
-     * @return object id.
-     */
-    public abstract Integer getIdOfModel(T object);
+    public abstract TableField<Record, SK> getSecondIdOfTableRecord();
 
 
     /**
      * Get id.
-     * @param path to object in Database
+     * @param key to object in Database
      * @return object id
-     * @see #getNameIdOfTableRecord
+     * @see #getSecondIdOfTableRecord()
      */
-    public Integer getId(String path){
+    public Integer getIdBySecondId(SK key){
+        this.key = key;
         Integer id = null;
         try {
-            T data = loadOfPath(path);
-            id = getIdOfModel(data);
+            T data = findBySecondId(key);
+            id = getId(data);
         } catch (DataAccessException e){
             e.printStackTrace();
         } catch (NullPointerException e){
@@ -83,40 +100,45 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>> {
     /**
      * Generate id for object to database
      * @return generated id.
-
-    // TODO: jesli zostanie usuniety element ze srodka bazy, to otrzmane pozniej id bedzie bledne
+    */
     public Integer generateId(){
-        try (DSLContext create = DSL.using(DB_URL)) {
-            List<T> list =
-                    create.select(TABLE.fields())
-                            .from(TABLE)
-                            .fetchInto(type);
-            return list.size();
+        ArrayList<T> list = (ArrayList<T>) loadAll();
+        Integer id = 0;
+        for(T object : list){
+            if ( this.getId(object) > id) {
+                id = this.getId(object);
+            }
         }
+        return id+1;
     }
-     */
+
 
     /**
-     * Check if object based on name exists in database.
-     * @param name of object in Database (like DISPLAY_PATH or USER_NAME.
+     * Checks using second id if object exists in database.
+     * @param key to object in Database (like DISPLAY_PATH or USER_NAME.
      * @return true if object exist in database
      */
-    public boolean exists(String name){
+    public boolean existsBySecondId(SK key){
         try (DSLContext create = DSL.using(DB_URL)) {
-            return create.fetchExists(create.selectFrom(TABLE).where(getNameIdOfTableRecord().equal(name)));
+            return create.fetchExists(create.selectFrom(TABLE).where(getSecondIdOfTableRecord().equal(key)));
         }
     }
 
     /**
-     *
-     * @param name of object in Database (like DISPLAY_PATH or USER_NAME).
+     * Loads record from database based on its second key ( like USER_NAME or PATH_DISPLAY)
+     * @param key to object in Database (like DISPLAY_PATH or USER_NAME).
      * @return object of class #T from database.
-     * @throws DataAccessException jooq exception
+     * @throws @DataAccessException jooq exception
+     * @see @DataAccessException
      */
-    public T loadOfPath(String name) throws DataAccessException{
+    public T findBySecondId(SK key) throws DataAccessException{
         T object;
         try (DSLContext create = DSL.using(DB_URL)) {
-            Record record = create.selectFrom(TABLE).where(getNameIdOfTableRecord().equal(name)).fetchOne();
+            Record record = create.selectFrom(TABLE)
+                    .where(getSecondIdOfTableRecord()
+                            .equal(key))
+                    .fetchOne();
+
             object = record.into(this.type);
 
         } catch (DataAccessException e){
@@ -126,39 +148,28 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>> {
     }
 
     /**
-     *
-     * @param id of object in Database (like ID or FILE_ID).
-     * @return object of class #T from database.
-     * @throws DataAccessException jooq exception
+     * Loads all records to list from table.
+     * @return list containing all records.
      */
-    public T loadOfId(Integer id) throws DataAccessException{
-        T user;
+    public List<T> loadAll(){
         try (DSLContext create = DSL.using(DB_URL)) {
-            Record record = create.selectFrom(TABLE).where(getIdOfTableRecord().equal(id)).fetchOne();
-            user = record.into(this.type);
-        } catch (DataAccessException e){
-            throw e;
-        }
-        return user;
-    }
+            List<T> list =
+                    create.select(TABLE.fields())
+                            .from(TABLE)
+                            .fetchInto(type);
 
-    /**
-     * Removes object based on path from database.
-     * @param path to object in Database
-     */
-    public void remove(String path) {
-        try (DSLContext create = DSL.using(DB_URL)) {
-            create.delete(TABLE).where(getNameIdOfTableRecord().equal(path)).execute();
+            return list;
         }
     }
 
+
     /**
-     * Removes object based on id from database.
-     * @param id to object in Database
+     * Removes object based on second key from database.
+     * @param key is second key to object in Database
      */
-    public void remove(Integer id) {
+    public void delete(SK key) {
         try (DSLContext create = DSL.using(DB_URL)) {
-            create.delete(TABLE).where(getIdOfTableRecord().equal(id)).execute();
+            create.delete(TABLE).where(getSecondIdOfTableRecord().equal(key)).execute();
         }
     }
 }

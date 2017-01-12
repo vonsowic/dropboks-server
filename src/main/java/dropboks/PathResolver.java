@@ -21,13 +21,18 @@ public class PathResolver {
     }
 
 
-    /**
-     * @param path is a String
-     * @return userName of user's directory
-     */
+    public static String getName(ArrayList<String> path){
+        return path.get(path.size()-1);
+    }
+
+    public static String getName(String path){
+        return getName(convertToList(path));
+    }
+
     public static String getUserName(ArrayList<String> path){
         return path.get(0);
     }
+
 
     public static ArrayList<String> convertToList(String path){
         return new ArrayList<>(Arrays.asList(path.split("/")));

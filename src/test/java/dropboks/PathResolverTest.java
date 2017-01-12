@@ -13,6 +13,16 @@ import static org.junit.Assert.*;
  */
 public class PathResolverTest {
     @Test
+    public void getName() throws Exception {
+        Assert.assertEquals("wakacje.png", PathResolver.getName("Ciri/Pliki/Zdjecia/wakacje.png") );
+    }
+
+    @Test
+    public void getNameFromHomeDirectory() throws Exception {
+        Assert.assertEquals("Ciri", PathResolver.getName("Ciri"));
+    }
+
+    @Test
     public void convertToList() throws Exception {
         ArrayList<String> list = PathResolver.convertToList("Ciri/Pliki/plik.txt");
         assertThat(list).hasSize(3)
@@ -38,8 +48,9 @@ public class PathResolverTest {
     }
 
     @Test
-    public void isHomeDirectory1() throws Exception {
+    public void isHomeDirectoryWhenNoHomeDirectoryIsChecked() throws Exception {
         Assert.assertFalse( PathResolver.isHomeDirectory("Ciri/plik.txt") );
     }
+
 
 }

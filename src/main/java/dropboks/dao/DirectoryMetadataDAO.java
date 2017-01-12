@@ -18,8 +18,7 @@ import static pl.edu.agh.kis.florist.db.tables.FolderMetadata.FOLDER_METADATA;
  * Directory Data Access Object
  * @author miwas
  */
-public class DirectoryMetadataDAO extends DAO<DirectoryMetadata, FolderMetadataRecord>{
-    private final String DB_URL = "jdbc:sqlite:test.db";
+public class DirectoryMetadataDAO extends MetadataDAO<DirectoryMetadata, FolderMetadataRecord, String> {
 
     private DropboksController controller;
 
@@ -36,13 +35,54 @@ public class DirectoryMetadataDAO extends DAO<DirectoryMetadata, FolderMetadataR
     }
 
     @Override
-    public TableField<FolderMetadataRecord, String> getNameIdOfTableRecord() {
+    public TableField<FolderMetadataRecord, String> getSecondIdOfTableRecord() {
         return FOLDER_METADATA.PATH_DISPLAY;
     }
 
     @Override
-    public Integer getIdOfModel(DirectoryMetadata object) {
+    protected Integer getId(DirectoryMetadata object) {
         return object.getFolderId();
+    }
+
+    @Override
+    public DirectoryMetadata move(String path, String newPath) {
+        DirectoryMetadata record = this.findBySecondId(path);
+        DirectoryMetadata newDirectory = this.findBySecondId(PathResolver.getParentPath(newPath));
+
+        DirectoryMetadata newRecord = new DirectoryMetadata(
+                record.getFolderId(),
+                PathResolver.getName(newPath),
+                newPath.toLowerCase(),
+                newPath,
+                newDirectory.getFolderId(),
+                record.getServerCreatedAt(),
+                record.getOwnerId()
+        );
+
+        this.update(newRecord);
+        return newRecord;
+    }
+
+    @Override
+    public DirectoryMetadata getMetaData(String path) {
+        return findBySecondId(path);
+    }
+
+    @Override
+    public DirectoryMetadata rename(String oldName, String newName) {
+        DirectoryMetadata directoryMetadata = findBySecondId(oldName);
+        DirectoryMetadata newDirectoryMetadata = new DirectoryMetadata(
+                directoryMetadata.getFolderId(),
+                PathResolver.getName(newName),
+                directoryMetadata.getPathLower(),
+                directoryMetadata.getPathDisplay(),
+                directoryMetadata.getParentFolderId(),
+                directoryMetadata.getServerCreatedAt(),
+                directoryMetadata.getOwnerId()
+        );
+
+        update(newDirectoryMetadata);
+        return newDirectoryMetadata;
     }
 
     // adds directory to existing directory
@@ -52,12 +92,12 @@ public class DirectoryMetadataDAO extends DAO<DirectoryMetadata, FolderMetadataR
 
         try {
             String name = PathResolver.getUserName(path);
-            User user = controller.getUsersRepository().loadOfPath(name);
+            User user = controller.getUsersRepository().findBySecondId(name);
 
 
             newDirectory = new DirectoryMetadata(
-                   // this.generateId(),
-                    name,
+                    this.generateId(),
+                    PathResolver.getName(path),
                     path.toLowerCase(),
                     path,
                     getParentDirecoryId(tmpPath),
@@ -77,29 +117,26 @@ public class DirectoryMetadataDAO extends DAO<DirectoryMetadata, FolderMetadataR
         } else {
             return null;
         }
-        Integer id = loadOfPath(tmp).getFolderId();
+        Integer id = findBySecondId(tmp).getFolderId();
         return id;
     }
 
     public DirectoryMetadata createDirectoryForUser(User user) {
         DirectoryMetadata usersDirectory =
                 new DirectoryMetadata(
-                        //this.generateId(),
+                        this.generateId(),
                         user.getUserName(),
                         user.getUserName().toLowerCase(),
                         user.getUserName(),
                         DropboksController.getServerName(),
                         user.getId());
 
-        DirectoryMetadata result;
+        DirectoryMetadata result = null;
         try {
-           result = this.store(usersDirectory);
+           this.insert(usersDirectory);
         } catch (DataAccessException e){
             throw e;
         }
         return result;
     }
-
-
-
 }

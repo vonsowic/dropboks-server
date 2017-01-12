@@ -15,4 +15,8 @@ public class FileMetadata extends pl.edu.agh.kis.florist.db.tables.pojos.FileMet
     public FileMetadata(String name, String pathLower, String pathDisplay, Integer enclosingFolderId, Integer size, String serverCreatedAt, Integer ownerId) {
         super(null, name, pathLower, pathDisplay, enclosingFolderId, size, serverCreatedAt, null, ownerId);
     }
+
+    public FileMetadata(Integer id, String name, String pathLower, String pathDisplay, Integer enclosingFolderId, Integer size, String serverCreatedAt, Integer ownerId) {
+        super(id, name, pathLower, pathDisplay, enclosingFolderId, size, serverCreatedAt, null, ownerId);
+    }
 }

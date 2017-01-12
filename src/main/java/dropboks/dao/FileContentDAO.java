@@ -10,7 +10,7 @@ import static pl.edu.agh.kis.florist.db.tables.FileContents.FILE_CONTENTS;
 /**
  * Created by miwas on 11.01.17.
  */
-public class FileContentDAO extends DAO<FileContent, FileContentsRecord> {
+public class FileContentDAO extends DAO<FileContent, FileContentsRecord, byte[]> {
     public FileContentDAO(Class<FileContent> type, TableImpl<FileContentsRecord> table) {
         super(type, table);
     }
@@ -21,12 +21,12 @@ public class FileContentDAO extends DAO<FileContent, FileContentsRecord> {
     }
 
     @Override
-    public TableField<FileContentsRecord, String> getNameIdOfTableRecord() {
-        return null;
+    public TableField<FileContentsRecord, byte[]> getSecondIdOfTableRecord() {
+        return FILE_CONTENTS.CONTENTS;
     }
 
     @Override
-    public Integer getIdOfModel(FileContent object) {
+    protected Integer getId(FileContent object) {
         return object.getFileId();
     }
 }
