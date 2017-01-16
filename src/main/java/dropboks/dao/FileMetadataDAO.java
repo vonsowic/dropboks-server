@@ -12,7 +12,7 @@ import static pl.edu.agh.kis.florist.db.tables.FileMetadata.FILE_METADATA;
 /**
  * Created by miwas on 10.01.17.
  */
-public class FileMetadataDAO extends MetadataDAO<FileMetadata, FileMetadataRecord, String> {
+public class FileMetadataDAO extends MetadataDAO<FileMetadata, FileMetadataRecord> {
 
     private DropboksController controller;
 

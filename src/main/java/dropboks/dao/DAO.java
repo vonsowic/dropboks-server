@@ -36,7 +36,6 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
      * Reference to table in Database.
      */
     private final TableImpl<Record> TABLE;
-    private SK key;
 
 
     protected DAO( Class<T> type, Table<Record> table) {
@@ -69,17 +68,10 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
      * @return object id
      * @see #getSecondIdOfTableRecord()
      */
-    public Integer getIdBySecondId(SK key){
-        this.key = key;
+    public Integer getIdBySecondId(SK key) throws DataAccessException{
         Integer id = null;
-        try {
-            T data = findBySecondId(key);
-            id = getId(data);
-        } catch (DataAccessException e){
-            e.printStackTrace();
-        } catch (NullPointerException e){
-            e.printStackTrace();
-        }
+        T data = findBySecondId(key);
+        id = getId(data);
         return id;
     }
 
@@ -102,6 +94,7 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
      * @return generated id.
     */
     public Integer generateId(){
+
         ArrayList<T> list = (ArrayList<T>) loadAll();
         Integer id = 0;
         for(T object : list){
@@ -110,6 +103,8 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
             }
         }
         return id+1;
+
+       //return null;
     }
 
 
@@ -132,17 +127,21 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
      * @see @DataAccessException
      */
     public T findBySecondId(SK key) throws DataAccessException{
-        T object;
+        T object = null;
         try (DSLContext create = DSL.using(DB_URL)) {
             Record record = create.selectFrom(TABLE)
                     .where(getSecondIdOfTableRecord()
                             .equal(key))
                     .fetchOne();
 
+            System.out.println("Record");
+
+            System.out.println("Record" + record.toString());
+
             object = record.into(this.type);
 
-        } catch (DataAccessException e){
-            throw e;
+        } catch (NullPointerException e){
+            e.printStackTrace();
         }
         return object;
     }
@@ -171,5 +170,20 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
         try (DSLContext create = DSL.using(DB_URL)) {
             create.delete(TABLE).where(getSecondIdOfTableRecord().equal(key)).execute();
         }
+    }
+
+    /**
+     * @return type of class stored in the table
+     */
+    @Override
+    public Class<T> getType() {
+        return type;
+    }
+
+    /**
+     * @return reference to table from database.
+     */
+    public TableImpl<Record> getTABLE() {
+        return TABLE;
     }
 }

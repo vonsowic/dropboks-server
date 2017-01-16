@@ -18,7 +18,7 @@ import static pl.edu.agh.kis.florist.db.tables.FolderMetadata.FOLDER_METADATA;
  * Directory Data Access Object
  * @author miwas
  */
-public class DirectoryMetadataDAO extends MetadataDAO<DirectoryMetadata, FolderMetadataRecord, String> {
+public class DirectoryMetadataDAO extends MetadataDAO<DirectoryMetadata, FolderMetadataRecord> {
 
     private DropboksController controller;
 
@@ -28,6 +28,7 @@ public class DirectoryMetadataDAO extends MetadataDAO<DirectoryMetadata, FolderM
         super(type, table);
         this.controller = controller;
     }
+
 
     @Override
     public TableField<FolderMetadataRecord, Integer> getIdOfTableRecord() {

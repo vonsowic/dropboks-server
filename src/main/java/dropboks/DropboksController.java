@@ -2,21 +2,23 @@ package dropboks;
 
 import com.google.gson.Gson;
 import dropboks.dao.*;
-import dropboks.model.DirectoryFileContest;
-import dropboks.model.DirectoryMetadata;
-import dropboks.model.FileContent;
-import dropboks.model.FileMetadata;
-import dropboks.model.User;
+import dropboks.model.*;
+import javafx.util.Pair;
 import org.jooq.exception.DataAccessException;
 
 import spark.Request;
 import spark.Response;
 
+import javax.xml.crypto.Data;
+import java.security.InvalidParameterException;
+import java.util.List;
+
 import static pl.edu.agh.kis.florist.db.tables.FileMetadata.FILE_METADATA;
 import static pl.edu.agh.kis.florist.db.tables.FileContents.FILE_CONTENTS;
 import static pl.edu.agh.kis.florist.db.tables.FolderFileContents.FOLDER_FILE_CONTENTS;
+import static pl.edu.agh.kis.florist.db.tables.FolderFolderContents.FOLDER_FOLDER_CONTENTS;
+
 import static pl.edu.agh.kis.florist.db.tables.FolderMetadata.FOLDER_METADATA;
-import static pl.edu.agh.kis.florist.db.tables.Users.USERS;
 
 
 
@@ -44,21 +46,21 @@ public class DropboksController {
     private static final String success = "Success";
     private static final String error = "Error :(";
 
-
-
     private final Gson gson = new Gson();
 
     private UsersDAO usersRepo;
     private DirectoryMetadataDAO dirMetaRepo;
-    private DirectoryFileContestDAO dirFileContRepo;
+
     private FileMetadataDAO filesMetaRepo;
     private FileContentDAO filesContRepo;
 
+    private DirectoryFileContestDAO dirFileContRepo;
+    private DirectoryDirectoryContenstDAO dirDirContRepo;
+
+
     public DropboksController() {
         //Configuration configuration = new DefaultConfiguration().set(DriverManager.getConnection(DB_URL)).set(SQLDialect.SQLITE);
-        this.usersRepo = new UsersDAO(
-                User.class,
-                USERS);
+        this.usersRepo = new UsersDAO();
 
         this.dirMetaRepo = new DirectoryMetadataDAO(
                 DirectoryMetadata.class,
@@ -78,7 +80,14 @@ public class DropboksController {
 
         this.dirFileContRepo = new DirectoryFileContestDAO(
                 DirectoryFileContest.class,
-                FOLDER_FILE_CONTENTS
+                FOLDER_FILE_CONTENTS,
+                dirMetaRepo
+        );
+
+        this.dirDirContRepo = new DirectoryDirectoryContenstDAO(
+                DirectoryDirectoryContest.class,
+                FOLDER_FOLDER_CONTENTS,
+                dirMetaRepo
         );
     }
 
@@ -121,7 +130,7 @@ public class DropboksController {
     }
 
     public Object createDirectory(Request request, Response response) {
-        String path = request.splat()[0];
+        String path = request.splat()[0];  // path to new Directory
 
         if ( dirMetaRepo.existsBySecondId(path)){
             response.status(ALREADY_EXISTS);
@@ -129,26 +138,34 @@ public class DropboksController {
         }
 
         DirectoryMetadata result = dirMetaRepo.store(path);
+
+        DirectoryDirectoryContest directoryDirectoryContest = new DirectoryDirectoryContest(
+                result.getParentFolderId(),
+                result.getFolderId()
+        );
+        dirDirContRepo.store(directoryDirectoryContest);
+
         response.status(CREATED);
         return result;
     }
 
-    public Object rename(Request request, Response response) {
+    public Object rename(Request request, Response response)  {
         final String path = request.splat()[0]; // path to old directory or file
-        String newName = request.queryMap().get("new_path").value(); // path to new directory
+        String newName = PathResolver.getParentPath(path) + "/" + request.queryMap().get("new_path").value(); // path to new directory
 
-        MetadataDAO repo = resolveMetaType(path);
-        if ( repo == null){
+        MetadataDAO repo;
+        try {
+            repo = resolveMetaType(path);
+        } catch (InvalidParameterException e){
             response.status(INVALID_PARAMETER);
             return path_doesnt_exist;
         }
-
         repo.rename(path, newName);
-
         response.status(CREATED);
-        return "Hello world";
+        return "OK";
     }
 
+    // TODO : sth is not yes :)
     public Object remove(Request request, Response response) {
         final String path = request.splat()[0]; // path to directory or file
 
@@ -158,13 +175,23 @@ public class DropboksController {
             return "Can't remove home directory";
         }
 
-        MetadataDAO repo = resolveMetaType(path);
-        if ( repo == null){
+        Pair repo;
+        try {
+            repo = resolveType(path);
+        } catch (InvalidParameterException e){
             response.status(INVALID_PARAMETER);
             return path_doesnt_exist;
         }
+        MetadataDAO metadataDAO = (MetadataDAO) repo.getKey();
+        ContentsDAO contentsDAO = (ContentsDAO) repo.getValue();
 
-        repo.delete(path);
+        metadataDAO.delete(path);
+        try {
+            contentsDAO.deleteByPath(path);
+        } catch (DataAccessException ex){
+            ex.printStackTrace();
+        }
+
         response.status(SUCCESSFUL_DELETE_OPERATION);
         return success;
     }
@@ -172,9 +199,10 @@ public class DropboksController {
     public Object getMetaData(Request request, Response response) {
         final String path = request.splat()[0]; // path to directory
 
-        // Resolve type of file
-        MetadataDAO repo = resolveMetaType(path);
-        if ( repo == null){
+        MetadataDAO repo;
+        try {
+            repo = resolveMetaType(path);
+        } catch (InvalidParameterException e) {
             response.status(INVALID_PARAMETER);
             return path_doesnt_exist;
         }
@@ -219,24 +247,34 @@ public class DropboksController {
         return fileMetadata;
     }
 
-    // TODO: move content type
     public Object move(Request request, Response response) {
         final String path = request.splat()[0]; // path to directory or file
         String newPath = request.queryMap().get("new_path").value(); // path to new directory
 
-        MetadataDAO repo = resolveMetaType(path);
-        if ( repo == null){
+        Pair repo;
+        try {
+            repo = resolveType(path);
+        } catch (InvalidParameterException e){
             response.status(INVALID_PARAMETER);
             return path_doesnt_exist;
         }
+        MetadataDAO metaRepo = (MetadataDAO) repo.getKey();
+        ContentsDAO contRepo = (ContentsDAO) repo.getValue();
 
-        if ( !repo.existsBySecondId(newPath)){
+        if ( !metaRepo.existsBySecondId(PathResolver.getParentPath(newPath))){
             response.status(INVALID_PARAMETER);
-            return null;
+            return error;
         }
 
+        Object result = null;
+        try {
+            contRepo.move(path, newPath);
+            result = metaRepo.move(path, newPath);
+        } catch (DataAccessException ex){
+            ex.printStackTrace();
+        }
         response.status(OK);
-        return repo.move(path, newPath);
+        return result;
     }
 
     //TODO: all
@@ -249,9 +287,42 @@ public class DropboksController {
         return null;
     }
 
-    //TODO: all
     public Object getListFolderContent(Request request, Response response) {
-        return null;
+        final String path = request.splat()[0]; // path to directory
+        String tmp = request.queryMap().get("recursive").value(); // path to new directory
+        boolean recursive;
+        if (tmp.equals("true")){
+            recursive = true;
+        } else {
+            recursive = false;
+        }
+
+        DirectoryMetadata parentDirectory ;
+        try {
+            parentDirectory = dirMetaRepo.findBySecondId(path);
+        } catch (DataAccessException ex){
+            response.status(INVALID_PARAMETER);
+            return path_doesnt_exist;
+        }
+        Integer directoryId = parentDirectory.getFolderId();
+
+        List<Object> metadataList = dirMetaRepo
+                        .getListOfMetadata(
+                            dirDirContRepo
+                                    .getListFolderContentOfId(directoryId, recursive)
+        );
+
+        metadataList.addAll(
+                filesMetaRepo
+                        .getListOfMetadata(
+                                dirFileContRepo
+                                        .getListFolderContentOfId(directoryId, recursive)
+                        )
+        );
+
+
+        response.status(OK);
+        return metadataList;
     }
 
     public UsersDAO getUsersRepository() {
@@ -266,15 +337,22 @@ public class DropboksController {
         return SERVER_NAME;
     }
 
-    public DirectoryFileContestDAO getDirectoryFileContentRepository() {
-        return dirFileContRepo;
+    public Pair resolveType(String path) throws InvalidParameterException{
+        if ( dirMetaRepo.existsBySecondId(path)){ // so its directory
+            return new Pair<>(dirMetaRepo, dirDirContRepo);
+        } else if (filesMetaRepo.existsBySecondId(path)) {
+            return new Pair<>(filesMetaRepo, dirFileContRepo);
+        } else throw new InvalidParameterException("Not found in database.");
     }
 
-    public MetadataDAO resolveMetaType(String path){
-        if ( dirMetaRepo.existsBySecondId(path)){ // so its directory
-            return dirMetaRepo;
-        } else if (filesMetaRepo.existsBySecondId(path)) {
-            return filesMetaRepo;
-        } else return null;
+    public MetadataDAO resolveMetaType(String path) throws InvalidParameterException{
+        MetadataDAO repo;
+        try {
+            repo = (MetadataDAO) resolveType(path).getKey();
+        } catch (InvalidParameterException e){
+            throw e;
+        }
+        return repo;
     }
+
 }

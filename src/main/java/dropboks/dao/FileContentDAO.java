@@ -29,4 +29,5 @@ public class FileContentDAO extends DAO<FileContent, FileContentsRecord, byte[]>
     protected Integer getId(FileContent object) {
         return object.getFileId();
     }
+
 }
