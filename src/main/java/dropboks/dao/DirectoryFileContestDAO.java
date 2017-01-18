@@ -1,5 +1,6 @@
 package dropboks.dao;
 
+import dropboks.DropboksController;
 import dropboks.model.DirectoryFileContest;
 import dropboks.model.DirectoryMetadata;
 import org.jooq.TableField;
@@ -12,28 +13,28 @@ import static pl.edu.agh.kis.florist.db.tables.FolderFileContents.FOLDER_FILE_CO
  */
 public class DirectoryFileContestDAO extends ContentsDAO<DirectoryFileContest, FolderFileContentsRecord> {
 
-    public DirectoryFileContestDAO(Class<DirectoryFileContest> type, TableImpl<FolderFileContentsRecord> table, DirectoryMetadataDAO repository) {
-        super(type, table, repository);
-    }
-
-    @Override
-    public TableField<FolderFileContentsRecord, Integer> getSecondIdOfTableRecord() {
-        return FOLDER_FILE_CONTENTS.CONTAINED_FILE_ID;
+    public DirectoryFileContestDAO(Class<DirectoryFileContest> type, TableImpl<FolderFileContentsRecord> table, DropboksController controller) {
+        super(type, table, controller);
     }
 
     @Override
     public TableField<FolderFileContentsRecord, Integer> getIdOfTableRecord() {
+        return FOLDER_FILE_CONTENTS.CONTAINED_FILE_ID;
+    }
+
+    @Override
+    public TableField<FolderFileContentsRecord, Integer> getSecondIdOfTableRecord() {
         return FOLDER_FILE_CONTENTS.PARENT_FOLDER_ID;
     }
 
     @Override
-    public Integer getSecondId(DirectoryFileContest object) {
+    public Integer getId(DirectoryFileContest object) {
         return object.getContainedFileId();
     }
 
 
     @Override
-    public Integer getId(DirectoryFileContest object) {
+    public Integer getSecondId(DirectoryFileContest object) {
         return object.getParentFolderId();
     }
 

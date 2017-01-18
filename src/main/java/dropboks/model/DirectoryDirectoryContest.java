@@ -10,7 +10,7 @@ public class DirectoryDirectoryContest extends FolderFolderContents {
         super(value);
     }
 
-    public DirectoryDirectoryContest(Integer parentFolderId, Integer containedFolderId) {
-        super(parentFolderId, containedFolderId);
+    public DirectoryDirectoryContest( Integer containedFolderId, Integer parentFolderId) {
+        super(containedFolderId, parentFolderId);
     }
 }

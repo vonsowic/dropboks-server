@@ -11,6 +11,7 @@ import pl.edu.agh.kis.florist.db.tables.records.FolderMetadataRecord;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import static pl.edu.agh.kis.florist.db.tables.FolderMetadata.FOLDER_METADATA;
 
@@ -20,13 +21,10 @@ import static pl.edu.agh.kis.florist.db.tables.FolderMetadata.FOLDER_METADATA;
  */
 public class DirectoryMetadataDAO extends MetadataDAO<DirectoryMetadata, FolderMetadataRecord> {
 
-    private DropboksController controller;
-
     public DirectoryMetadataDAO(Class<DirectoryMetadata> type,
                                 TableImpl<FolderMetadataRecord> table,
                                 DropboksController controller) {
-        super(type, table);
-        this.controller = controller;
+        super(type, table, controller);
     }
 
 
@@ -75,8 +73,8 @@ public class DirectoryMetadataDAO extends MetadataDAO<DirectoryMetadata, FolderM
         DirectoryMetadata newDirectoryMetadata = new DirectoryMetadata(
                 directoryMetadata.getFolderId(),
                 PathResolver.getName(newName),
-                directoryMetadata.getPathLower(),
-                directoryMetadata.getPathDisplay(),
+                newName.toLowerCase(),
+                newName,
                 directoryMetadata.getParentFolderId(),
                 directoryMetadata.getServerCreatedAt(),
                 directoryMetadata.getOwnerId()
@@ -86,6 +84,17 @@ public class DirectoryMetadataDAO extends MetadataDAO<DirectoryMetadata, FolderM
         return newDirectoryMetadata;
     }
 
+    @Override
+    public ContentsDAO getContestRepository() {
+        return getController().getDirectoryDirectoryContestRepository();
+    }
+
+    @Override
+    public DirectoryMetadata getMetadataWithChildren(Integer id, List<DirectoryMetadata> listOfChildren) {
+        DirectoryMetadata directoryMetadata = findById(id);
+        return directoryMetadata.appendChildren(listOfChildren);
+    }
+
     // adds directory to existing directory
     public DirectoryMetadata store(String path) throws DataAccessException {
         DirectoryMetadata newDirectory ;
@@ -93,7 +102,7 @@ public class DirectoryMetadataDAO extends MetadataDAO<DirectoryMetadata, FolderM
 
         try {
             String name = PathResolver.getUserName(path);
-            User user = controller.getUsersRepository().findBySecondId(name);
+            User user = getController().getUsersRepository().findBySecondId(name);
 
 
             newDirectory = new DirectoryMetadata(
@@ -102,7 +111,7 @@ public class DirectoryMetadataDAO extends MetadataDAO<DirectoryMetadata, FolderM
                     path.toLowerCase(),
                     path,
                     getParentDirecoryId(tmpPath),
-                    controller.getServerName(),
+                    getController().getServerName(),
                     user.getId()
             );
         } catch (DataAccessException e){

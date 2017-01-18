@@ -1,5 +1,6 @@
 package dropboks.dao;
 
+import dropboks.DropboksController;
 import dropboks.model.FileContent;
 import org.jooq.TableField;
 import org.jooq.impl.TableImpl;
@@ -11,8 +12,8 @@ import static pl.edu.agh.kis.florist.db.tables.FileContents.FILE_CONTENTS;
  * Created by miwas on 11.01.17.
  */
 public class FileContentDAO extends DAO<FileContent, FileContentsRecord, byte[]> {
-    public FileContentDAO(Class<FileContent> type, TableImpl<FileContentsRecord> table) {
-        super(type, table);
+    public FileContentDAO(Class<FileContent> type, TableImpl<FileContentsRecord> table, DropboksController controller) {
+        super(type, table, controller);
     }
 
     @Override

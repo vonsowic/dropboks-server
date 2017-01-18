@@ -12,8 +12,8 @@ public class DirectoryFileContest extends FolderFileContents
         super(value);
     }
 
-    public DirectoryFileContest(Integer parentFolderId, Integer containedFileId) {
-        super(parentFolderId, containedFileId);
+    public DirectoryFileContest(Integer containedFileId, Integer parentFolderId) {
+        super(containedFileId, parentFolderId);
     }
 
 }

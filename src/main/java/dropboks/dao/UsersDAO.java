@@ -1,16 +1,15 @@
 package dropboks.dao;
 
 import dropboks.App;
+import dropboks.DropboksController;
 import dropboks.model.User;
 import org.jooq.DSLContext;
 import org.jooq.TableField;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
-import pl.edu.agh.kis.florist.db.tables.Users;
 import pl.edu.agh.kis.florist.db.tables.records.UsersRecord;
 
-import javax.xml.crypto.Data;
 import java.util.List;
 
 import static pl.edu.agh.kis.florist.db.Tables.USERS;
@@ -20,13 +19,8 @@ import static pl.edu.agh.kis.florist.db.Tables.USERS;
  */
 public class UsersDAO extends DAO<User, UsersRecord, String> {
 
-    public UsersDAO(Class type, TableImpl table) {
-        super(type, table);
-    }
-
-    public UsersDAO(){
-        super(  User.class,
-                Users.USERS);
+    public UsersDAO(Class type, TableImpl table, DropboksController controller) {
+        super(type, table, controller);
     }
 
     @Override

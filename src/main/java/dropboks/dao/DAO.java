@@ -1,5 +1,6 @@
 package dropboks.dao;
 
+import dropboks.DropboksController;
 import org.jooq.*;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.*;
@@ -37,11 +38,15 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
      */
     private final TableImpl<Record> TABLE;
 
+    private DropboksController controller;
 
-    protected DAO( Class<T> type, Table<Record> table) {
+
+
+    protected DAO( Class<T> type, Table<Record> table, DropboksController controller) {
         super(table, type);
         this.type = type;
         TABLE = (TableImpl<Record>) table;
+        this.controller = controller;
 
         try {
             this.setConfiguration(new DefaultConfiguration().set(DriverManager.getConnection(DB_URL)).set(SQLDialect.SQLITE));
@@ -57,7 +62,7 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
     public abstract TableField<Record, Integer> getIdOfTableRecord();
 
     /**
-     * @return Name (like DISPALAY_NAME or USER_NAME ) from Database.
+     * @return Name (like DISPLAY_NAME or USER_NAME ) from Database.
      */
     public abstract TableField<Record, SK> getSecondIdOfTableRecord();
 
@@ -69,10 +74,8 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
      * @see #getSecondIdOfTableRecord()
      */
     public Integer getIdBySecondId(SK key) throws DataAccessException{
-        Integer id = null;
         T data = findBySecondId(key);
-        id = getId(data);
-        return id;
+        return getId(data);
     }
 
 
@@ -94,7 +97,7 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
      * @return generated id.
     */
     public Integer generateId(){
-
+        /*
         ArrayList<T> list = (ArrayList<T>) loadAll();
         Integer id = 0;
         for(T object : list){
@@ -103,8 +106,8 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
             }
         }
         return id+1;
-
-       //return null;
+        */
+       return null;
     }
 
 
@@ -127,23 +130,15 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
      * @see @DataAccessException
      */
     public T findBySecondId(SK key) throws DataAccessException{
-        T object = null;
         try (DSLContext create = DSL.using(DB_URL)) {
             Record record = create.selectFrom(TABLE)
                     .where(getSecondIdOfTableRecord()
                             .equal(key))
                     .fetchOne();
 
-            System.out.println("Record");
-
-            System.out.println("Record" + record.toString());
-
-            object = record.into(this.type);
-
-        } catch (NullPointerException e){
-            e.printStackTrace();
+            T object = record.into(this.type);
+            return object;
         }
-        return object;
     }
 
     /**
@@ -166,7 +161,7 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
      * Removes object based on second key from database.
      * @param key is second key to object in Database
      */
-    public void delete(SK key) {
+    public void deleteBySecondId(SK key) {
         try (DSLContext create = DSL.using(DB_URL)) {
             create.delete(TABLE).where(getSecondIdOfTableRecord().equal(key)).execute();
         }
@@ -185,5 +180,9 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
      */
     public TableImpl<Record> getTABLE() {
         return TABLE;
+    }
+
+    public DropboksController getController() {
+        return controller;
     }
 }

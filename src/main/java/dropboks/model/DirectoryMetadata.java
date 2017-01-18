@@ -2,10 +2,15 @@ package dropboks.model;
 
 import pl.edu.agh.kis.florist.db.tables.pojos.FolderMetadata;
 
+import java.util.List;
+
 /**
  * Created by miwas on 08.01.17.
  */
-public class DirectoryMetadata extends FolderMetadata {
+public class DirectoryMetadata extends FolderMetadata implements Recursion<DirectoryMetadata> {
+
+    List<DirectoryMetadata> listOfMetadata;
+
     public DirectoryMetadata(FolderMetadata value) {
         super(value);
     }
@@ -30,4 +35,13 @@ public class DirectoryMetadata extends FolderMetadata {
         super(null, name, pathLower, pathDisplay, parentFolderId, serverCreatedAt, ownerId);
     }
 
+    public DirectoryMetadata(DirectoryMetadata value, List<DirectoryMetadata> list){
+        super(value);
+        this.listOfMetadata = list;
+    }
+
+    @Override
+    public DirectoryMetadata appendChildren(List<DirectoryMetadata> list) {
+        return new DirectoryMetadata(this, list);
+    }
 }

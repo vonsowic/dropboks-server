@@ -6,6 +6,9 @@ import dropboks.model.FileMetadata;
 import org.jooq.TableField;
 import org.jooq.impl.TableImpl;
 import pl.edu.agh.kis.florist.db.tables.records.FileMetadataRecord;
+
+import java.util.List;
+
 import static pl.edu.agh.kis.florist.db.tables.FileMetadata.FILE_METADATA;
 
 
@@ -14,11 +17,8 @@ import static pl.edu.agh.kis.florist.db.tables.FileMetadata.FILE_METADATA;
  */
 public class FileMetadataDAO extends MetadataDAO<FileMetadata, FileMetadataRecord> {
 
-    private DropboksController controller;
-
     public FileMetadataDAO(Class<FileMetadata> type, TableImpl<FileMetadataRecord> table, DropboksController controller) {
-        super(type, table);
-        this.controller = controller;
+        super(type, table, controller);
     }
 
     @Override
@@ -36,7 +36,7 @@ public class FileMetadataDAO extends MetadataDAO<FileMetadata, FileMetadataRecor
         FileMetadata record = this.findBySecondId(path);
         FileMetadata newFile = this.findBySecondId(PathResolver.getParentPath(newPath));
 
-        Integer idOfDirectory = controller
+        Integer idOfDirectory = getController()
                 .getDirectoryMetadataRepository()
                 .getIdBySecondId(PathResolver.getParentPath(newPath));
 
@@ -48,7 +48,7 @@ public class FileMetadataDAO extends MetadataDAO<FileMetadata, FileMetadataRecor
                 idOfDirectory,
                 record.getSize(),
                 record.getServerCreatedAt(),
-                controller.getServerName(),
+                getController().getServerName(),
                 record.getOwnerId()
         );
 
@@ -69,8 +69,8 @@ public class FileMetadataDAO extends MetadataDAO<FileMetadata, FileMetadataRecor
         FileMetadata newFileMetadata = new FileMetadata(
                 fileMetadata.getFileId(),
                 PathResolver.getName(newName),
-                fileMetadata.getPathLower(),
-                fileMetadata.getPathDisplay(),
+                newName.toLowerCase(),
+                newName,
                 fileMetadata.getEnclosingFolderId(),
                 fileMetadata.getSize(),
                 fileMetadata.getServerCreatedAt(),
@@ -80,6 +80,16 @@ public class FileMetadataDAO extends MetadataDAO<FileMetadata, FileMetadataRecor
 
         update(newFileMetadata);
         return newFileMetadata;
+    }
+
+    @Override
+    public ContentsDAO getContestRepository() {
+        return getController().getDirectoryFileContestRepository();
+    }
+
+    @Override
+    public FileMetadata getMetadataWithChildren(Integer id, List<FileMetadata> listOfChildren) {
+        return null;
     }
 
 

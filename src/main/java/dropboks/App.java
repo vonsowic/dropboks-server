@@ -22,9 +22,11 @@ public class App {
 
         DropboksController controller = new DropboksController();
 
+        // enable https
+        //secure("deploy/keystore.jks", "password", null, null);
 		port(4567);
 
-        before(controller::authenticate);
+        //before(FILES_PATH + "/*/*", controller::authenticate);
 
         get(FILES_PATH + "/*/list_folder_content", controller::getListFolderContent,json);
 
@@ -40,17 +42,12 @@ public class App {
 
         put(FILES_PATH + "/*/move", controller::move, json);
 
-        put(FILES_PATH + "/*/create_directory", controller::createDirectory, json);
+        post(FILES_PATH + "/*/create_directory", controller::createDirectory, json);
 
         post(USERS_PATH + "/create_user", controller::createNewUser, json);
 
         get(USERS_PATH + "/access", controller::access, json);
-	}
 
-
-
-    private static void info(Request req) {
-		LOGGER.info("{}",req);
 	}
 
     public static String createHashedPassword(String password) {
