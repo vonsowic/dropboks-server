@@ -7,6 +7,8 @@ import org.jooq.impl.*;
 
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -95,6 +97,7 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
     /**
      * Generate id for object to database
      * @return generated id.
+     * @deprecated
     */
     public Integer generateId(){
         /*
@@ -180,6 +183,10 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
      */
     public TableImpl<Record> getTABLE() {
         return TABLE;
+    }
+
+    public Timestamp time(){
+        return Timestamp.valueOf(LocalDateTime.now());
     }
 
     public DropboksController getController() {

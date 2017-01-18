@@ -3,6 +3,7 @@ package dropboks.dao;
 import dropboks.DropboksController;
 import org.jooq.DSLContext;
 import org.jooq.Table;
+import org.jooq.TableField;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.jooq.impl.UpdatableRecordImpl;
@@ -25,9 +26,9 @@ public abstract class MetadataDAO<T, R extends UpdatableRecordImpl<R>> extends D
 
     public abstract T rename(String oldName, String newName);
 
-    public abstract ContentsDAO getContestRepository();
+    public abstract TableField<R, Integer> getParentIdTableRecord();
 
-    public abstract T getMetadataWithChildren(Integer id, List<T> listOfChildren);
+    //public abstract T getMetadataWithChildren(Integer id, List<T> listOfChildren);
 
     public List<T> getListOfMetadata(List<Integer> idsList){
         List<T> listOfMetadata = new ArrayList<>();
@@ -46,23 +47,24 @@ public abstract class MetadataDAO<T, R extends UpdatableRecordImpl<R>> extends D
        return listOfMetadata;
     }
 
-    public T getMetadatasWithChildren(Integer id, boolean recursive) throws DataAccessException{
-        List<Integer> listOfIds = getContestRepository().getListFolderContentOfId(id, false);
-        List<T> listOfMetadata = new ArrayList<>();
+    public List<T> getListOfChildren(Integer id){
+        List<T> listOfChildren = new ArrayList<>();
+        try (DSLContext create = DSL.using(DB_URL)) {
+            listOfChildren.add(
+                    create.selectFrom(getTABLE())
+                            .where(getParentIdTableRecord().equal(id))
+                            .fetchOne()
+                            .into(getType())
+            );
 
-        if (!recursive) {
-            return getMetadataWithChildren(id, getListOfMetadata(listOfIds));
-        } else {
-            for (Integer childsId : listOfIds){
-                //listOfMetadata.add(getMetadataWithChildren(childsId, true));
-            }
-
-            return getMetadataWithChildren(id, listOfMetadata);
         }
 
-
+        return listOfChildren;
     }
 
-
-
+    // TODO
+    public List<T> getMetadataList(Integer beggining, boolean recursive){
+        List<T> list = new ArrayList<>();
+        return list;
+    }
 }

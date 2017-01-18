@@ -2,6 +2,8 @@ package dropboks.model;
 
 import dropboks.TransferFile;
 
+import java.sql.Timestamp;
+
 /**
  * Created by miwas on 10.01.17.
  */
@@ -14,17 +16,16 @@ public class FileMetadata extends pl.edu.agh.kis.florist.db.tables.pojos.FileMet
         super(value);
     }
 
-    public FileMetadata(Integer fileId, String name, String pathLower, String pathDisplay, Integer enclosingFolderId, Integer size, String serverCreatedAt, String serverChangedAt, Integer ownerId) {
-        super(fileId, name, pathLower, pathDisplay, enclosingFolderId, size, serverCreatedAt, serverChangedAt, ownerId);
+    public FileMetadata(Integer fileId, String name, String pathLower, String pathDisplay, Integer size, Timestamp serverCreatedAt, Timestamp serverChangedAt, Integer enclosingFolderId) {
+        super(fileId, name, pathLower, pathDisplay, size, serverCreatedAt, serverChangedAt, enclosingFolderId);
     }
 
-    public FileMetadata(String name, String pathLower, String pathDisplay, Integer enclosingFolderId, Integer size, String serverCreatedAt, Integer ownerId) {
-        super(null, name, pathLower, pathDisplay, enclosingFolderId, size, serverCreatedAt, null, ownerId);
+    public FileMetadata(String name, String pathLower, String pathDisplay, Integer size, Timestamp serverCreatedAt, Timestamp serverChangedAt, Integer enclosingFolderId) {
+        super(null, name, pathLower, pathDisplay, size, serverCreatedAt, serverChangedAt, enclosingFolderId);
     }
 
-    public FileMetadata(Integer id, String name, String pathLower, String pathDisplay, Integer enclosingFolderId, Integer size, String serverCreatedAt, Integer ownerId) {
-        super(id, name, pathLower, pathDisplay, enclosingFolderId, size, serverCreatedAt, null, ownerId);
-    }
+
+
 
     public FileMetadata(pl.edu.agh.kis.florist.db.tables.pojos.FileMetadata value, TransferFile file) {
         super(value);
@@ -34,5 +35,4 @@ public class FileMetadata extends pl.edu.agh.kis.florist.db.tables.pojos.FileMet
     public FileMetadata getMetadataWithFile(TransferFile file){
         return new FileMetadata(this, file);
     }
-
 }

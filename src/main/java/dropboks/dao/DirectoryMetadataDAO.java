@@ -9,6 +9,8 @@ import org.jooq.exception.DataAccessException;
 import org.jooq.impl.TableImpl;
 import pl.edu.agh.kis.florist.db.tables.records.FolderMetadataRecord;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -39,6 +41,11 @@ public class DirectoryMetadataDAO extends MetadataDAO<DirectoryMetadata, FolderM
     }
 
     @Override
+    public TableField<FolderMetadataRecord, Integer> getParentIdTableRecord() {
+        return FOLDER_METADATA.PARENT_FOLDER_ID;
+    }
+
+    @Override
     protected Integer getId(DirectoryMetadata object) {
         return object.getFolderId();
     }
@@ -54,8 +61,7 @@ public class DirectoryMetadataDAO extends MetadataDAO<DirectoryMetadata, FolderM
                 newPath.toLowerCase(),
                 newPath,
                 newDirectory.getFolderId(),
-                record.getServerCreatedAt(),
-                record.getOwnerId()
+                time()
         );
 
         this.update(newRecord);
@@ -67,52 +73,30 @@ public class DirectoryMetadataDAO extends MetadataDAO<DirectoryMetadata, FolderM
         return findBySecondId(path);
     }
 
+    // TODO : recursive
     @Override
     public DirectoryMetadata rename(String oldName, String newName) {
         DirectoryMetadata directoryMetadata = findBySecondId(oldName);
-        DirectoryMetadata newDirectoryMetadata = new DirectoryMetadata(
-                directoryMetadata.getFolderId(),
-                PathResolver.getName(newName),
-                newName.toLowerCase(),
-                newName,
-                directoryMetadata.getParentFolderId(),
-                directoryMetadata.getServerCreatedAt(),
-                directoryMetadata.getOwnerId()
-        );
+        directoryMetadata.setName(newName);
 
-        update(newDirectoryMetadata);
-        return newDirectoryMetadata;
-    }
-
-    @Override
-    public ContentsDAO getContestRepository() {
-        return getController().getDirectoryDirectoryContestRepository();
-    }
-
-    @Override
-    public DirectoryMetadata getMetadataWithChildren(Integer id, List<DirectoryMetadata> listOfChildren) {
-        DirectoryMetadata directoryMetadata = findById(id);
-        return directoryMetadata.appendChildren(listOfChildren);
+        update(directoryMetadata);
+        return directoryMetadata;
     }
 
     // adds directory to existing directory
     public DirectoryMetadata store(String path) throws DataAccessException {
         DirectoryMetadata newDirectory ;
-        ArrayList<String> tmpPath = new ArrayList<>(Arrays.asList(path.split("/")));
 
         try {
             String name = PathResolver.getUserName(path);
-            User user = getController().getUsersRepository().findBySecondId(name);
-
+            //User user = getController().getUsersRepository().findBySecondId(name);
 
             newDirectory = new DirectoryMetadata(
-                    this.generateId(),
                     PathResolver.getName(path),
                     path.toLowerCase(),
                     path,
-                    getParentDirecoryId(tmpPath),
-                    getController().getServerName(),
-                    user.getId()
+                    findBySecondId(PathResolver.getParentPath(path)).getFolderId(),
+                    time()
             );
         } catch (DataAccessException e){
             throw e;
@@ -120,26 +104,14 @@ public class DirectoryMetadataDAO extends MetadataDAO<DirectoryMetadata, FolderM
         return store( newDirectory );
     }
 
-    public Integer getParentDirecoryId(ArrayList<String> path){
-        String tmp;
-        if (path.size()>1){
-            tmp = PathResolver.getParentPath(path);
-        } else {
-            return null;
-        }
-        Integer id = findBySecondId(tmp).getFolderId();
-        return id;
-    }
-
     public DirectoryMetadata createDirectoryForUser(User user) {
         DirectoryMetadata usersDirectory =
                 new DirectoryMetadata(
-                        this.generateId(),
                         user.getUserName(),
                         user.getUserName().toLowerCase(),
                         user.getUserName(),
-                        DropboksController.getServerName(),
-                        user.getId());
+                        0,  // root directory
+                        time());
 
         DirectoryMetadata result = null;
         try {

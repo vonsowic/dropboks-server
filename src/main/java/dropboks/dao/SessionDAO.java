@@ -12,7 +12,7 @@ import static pl.edu.agh.kis.florist.db.Tables.SESSION_DATA;
 /**
  * Created by miwas on 17.01.17.
  */
-public class SessionDAO extends DAO<Session, SessionDataRecord, Object> {
+public class SessionDAO extends DAO<Session, SessionDataRecord, String> {
     public SessionDAO(Class<Session> type, Table<SessionDataRecord> table, DropboksController controller) {
         super(type, table, controller);
     }
@@ -23,7 +23,7 @@ public class SessionDAO extends DAO<Session, SessionDataRecord, Object> {
     }
 
     @Override
-    public TableField<SessionDataRecord, Object> getSecondIdOfTableRecord() {
+    public TableField<SessionDataRecord, String> getSecondIdOfTableRecord() {
         return SESSION_DATA.SESSION_ID;
     }
 

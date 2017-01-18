@@ -2,6 +2,7 @@ package dropboks.dao;
 
 import dropboks.DropboksController;
 import dropboks.PathResolver;
+import dropboks.TransferFile;
 import dropboks.model.FileMetadata;
 import org.jooq.TableField;
 import org.jooq.impl.TableImpl;
@@ -32,30 +33,21 @@ public class FileMetadataDAO extends MetadataDAO<FileMetadata, FileMetadataRecor
     }
 
     @Override
+    public TableField<FileMetadataRecord, Integer> getParentIdTableRecord() {
+        return FILE_METADATA.ENCLOSING_FOLDER_ID;
+    }
+
+    // TODO : recursive
+    @Override
     public FileMetadata move(String path, String newPath) {
         FileMetadata record = this.findBySecondId(path);
-        FileMetadata newFile = this.findBySecondId(PathResolver.getParentPath(newPath));
 
         Integer idOfDirectory = getController()
                 .getDirectoryMetadataRepository()
                 .getIdBySecondId(PathResolver.getParentPath(newPath));
 
-        FileMetadata newRecord = new FileMetadata(
-                record.getFileId(),
-                PathResolver.getName(newPath),
-                newPath.toLowerCase(),
-                newPath,
-                idOfDirectory,
-                record.getSize(),
-                record.getServerCreatedAt(),
-                getController().getServerName(),
-                record.getOwnerId()
-        );
 
-        //controller.getDirectoryFileContentRepository()
-
-        this.update(newRecord);
-        return newRecord;
+        return record;
     }
 
     @Override
@@ -66,35 +58,28 @@ public class FileMetadataDAO extends MetadataDAO<FileMetadata, FileMetadataRecor
     @Override
     public FileMetadata rename(String oldName, String newName) {
         FileMetadata fileMetadata = findBySecondId(oldName);
-        FileMetadata newFileMetadata = new FileMetadata(
-                fileMetadata.getFileId(),
-                PathResolver.getName(newName),
-                newName.toLowerCase(),
-                newName,
-                fileMetadata.getEnclosingFolderId(),
-                fileMetadata.getSize(),
-                fileMetadata.getServerCreatedAt(),
-                DropboksController.getServerName(),
-                fileMetadata.getOwnerId()
-        );
 
-        update(newFileMetadata);
-        return newFileMetadata;
+
+        update(fileMetadata);
+        return fileMetadata;
     }
-
-    @Override
-    public ContentsDAO getContestRepository() {
-        return getController().getDirectoryFileContestRepository();
-    }
-
-    @Override
-    public FileMetadata getMetadataWithChildren(Integer id, List<FileMetadata> listOfChildren) {
-        return null;
-    }
-
 
     @Override
     protected Integer getId(FileMetadata object) {
         return object.getFileId();
+    }
+
+    public FileMetadata create(String pathToFile, TransferFile tmpFile) {
+        return new FileMetadata(
+                PathResolver.getUserName(pathToFile),
+                pathToFile.toLowerCase(),
+                pathToFile,
+                tmpFile.size(),
+                time(),
+                null,
+                getController().getDirectoryMetadataRepository().findBySecondId(PathResolver.getParentPath(pathToFile)).getFolderId()
+
+        );
+
     }
 }
