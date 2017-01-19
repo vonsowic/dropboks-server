@@ -40,14 +40,16 @@ public class FileMetadataDAO extends MetadataDAO<FileMetadata, FileMetadataRecor
         return new FileMetadata(findById(id), listOfChildren);
     }
 
-
-    // TODO : recursive
     @Override
-    public FileMetadata move(String path, String newPath) {
+    public FileMetadata move(String path, String newPath, Integer parentId) {
         FileMetadata record = this.findBySecondId(path);
 
+        record.setName(PathResolver.getName(newPath));
+        record.setPathDisplay(newPath);
+        record.setPathLower(newPath.toLowerCase());
+        record.setEnclosingFolderId(parentId);
 
-
+        update(record);
         return record;
     }
 

@@ -49,13 +49,17 @@ public class DirectoryMetadataDAO extends MetadataDAO<DirectoryMetadata, FolderM
     }
 
     @Override
-    public DirectoryMetadata move(String path, String newPath) {
+    public DirectoryMetadata move(String path, String newPath, Integer parentId) {
         DirectoryMetadata record = this.findBySecondId(path);
-        DirectoryMetadata newDirectory = this.findBySecondId(PathResolver.getParentPath(newPath));
-        record.setParentFolderId(newDirectory.getFolderId());
+        record.setParentFolderId(parentId);
 
         this.update(record);
         return record;
+    }
+
+    public DirectoryMetadata move(String path, String newPath) {
+        DirectoryMetadata parent = this.findBySecondId(PathResolver.getParentPath(newPath));
+        return move(path, newPath, parent.getFolderId());
     }
 
     @Override

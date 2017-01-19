@@ -204,7 +204,8 @@ public class DirectoryFileController {
             throw new InvalidParameterException("Path to directory doesn't exist");
         }
 
-        repo.move(oldPath, newPath);
+        Integer id = dirMetaRepo.findBySecondId(PathResolver.getParentPath(newPath)).getFolderId();
+        repo.move(oldPath, newPath, id);
         Object result = rename(oldPath, newPath);
         return result;
     }

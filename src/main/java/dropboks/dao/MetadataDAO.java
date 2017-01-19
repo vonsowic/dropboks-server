@@ -18,7 +18,7 @@ public abstract class MetadataDAO<T, R extends UpdatableRecordImpl<R>> extends D
         super(type, table);
     }
 
-    public abstract T move(String from, String to);
+    public abstract T move(String from, String to, Integer parentId);
 
     public abstract T rename(String oldName, String newName);
 
@@ -37,7 +37,6 @@ public abstract class MetadataDAO<T, R extends UpdatableRecordImpl<R>> extends D
         }
     }
 
-    // TODO : check for files
     public List getMetadataList(Integer beggining, boolean recursive){
         if ( !recursive ){
             return getListOfChildren(beggining);
