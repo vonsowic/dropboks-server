@@ -1,6 +1,7 @@
 package dropboks.dao;
 
 import dropboks.DropboksController;
+import dropboks.model.DirectoryMetadata;
 import org.jooq.DSLContext;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -22,49 +23,43 @@ public abstract class MetadataDAO<T, R extends UpdatableRecordImpl<R>> extends D
 
     public abstract T move(String from, String to);
 
-    public abstract T getMetaData(String path);
-
     public abstract T rename(String oldName, String newName);
 
     public abstract TableField<R, Integer> getParentIdTableRecord();
 
-    //public abstract T getMetadataWithChildren(Integer id, List<T> listOfChildren);
+    public abstract T getMetadataWithChildren(Integer id, List<T> listOfChildren);
 
-    public List<T> getListOfMetadata(List<Integer> idsList){
-        List<T> listOfMetadata = new ArrayList<>();
-
-        try (DSLContext create = DSL.using(DB_URL)) {
-            for ( Integer id : idsList){
-                listOfMetadata.add(
-                        create.selectFrom(getTABLE())
-                        .where(getIdOfTableRecord().equal(id))
-                        .fetchOne()
-                        .into(getType())
-                );
-            }
-        }
-
-       return listOfMetadata;
-    }
+    public abstract void delete(String path);
 
     public List<T> getListOfChildren(Integer id){
-        List<T> listOfChildren = new ArrayList<>();
         try (DSLContext create = DSL.using(DB_URL)) {
-            listOfChildren.add(
-                    create.selectFrom(getTABLE())
+            List<T> list =
+                    create.select(getTABLE().fields())
+                            .from(getTABLE())
                             .where(getParentIdTableRecord().equal(id))
-                            .fetchOne()
-                            .into(getType())
-            );
-
+                            .fetchInto(getType());
+            return list;
         }
-
-        return listOfChildren;
     }
 
-    // TODO
-    public List<T> getMetadataList(Integer beggining, boolean recursive){
+    // TODO : check for files
+    public List getMetadataList(Integer beggining, boolean recursive){
+        if ( !recursive ){
+            return getListOfChildren(beggining);
+        }
+
         List<T> list = new ArrayList<>();
+        List<T> childrenList = getListOfChildren(beggining);
+
+        for (T child : childrenList){
+            Integer childId = getId(child);
+            list.add((T) getMetadataWithChildren(childId, getMetadataList(childId, true)));
+        }
+
         return list;
+    }
+
+    public T getMetaData(String path) {
+        return findBySecondId(path);
     }
 }

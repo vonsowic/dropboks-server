@@ -3,6 +3,7 @@ package dropboks.dao;
 import dropboks.DropboksController;
 import dropboks.PathResolver;
 import dropboks.model.DirectoryMetadata;
+import dropboks.model.FileMetadata;
 import dropboks.model.User;
 import org.jooq.TableField;
 import org.jooq.exception.DataAccessException;
@@ -46,6 +47,11 @@ public class DirectoryMetadataDAO extends MetadataDAO<DirectoryMetadata, FolderM
     }
 
     @Override
+    public DirectoryMetadata getMetadataWithChildren(Integer id, List<DirectoryMetadata> listOfChildren) {
+        return new DirectoryMetadata(findById(id), listOfChildren);
+    }
+
+    @Override
     protected Integer getId(DirectoryMetadata object) {
         return object.getFolderId();
     }
@@ -55,29 +61,40 @@ public class DirectoryMetadataDAO extends MetadataDAO<DirectoryMetadata, FolderM
         DirectoryMetadata record = this.findBySecondId(path);
         DirectoryMetadata newDirectory = this.findBySecondId(PathResolver.getParentPath(newPath));
 
-        DirectoryMetadata newRecord = new DirectoryMetadata(
-                record.getFolderId(),
-                PathResolver.getName(newPath),
-                newPath.toLowerCase(),
-                newPath,
-                newDirectory.getFolderId(),
-                time()
-        );
+        rename(path, newPath);
+        record.setParentFolderId(newDirectory.getFolderId());
 
-        this.update(newRecord);
-        return newRecord;
+        this.update(record);
+        return record;
     }
 
     @Override
-    public DirectoryMetadata getMetaData(String path) {
-        return findBySecondId(path);
-    }
+    public DirectoryMetadata rename(String oldPath, String newPath) {
+        // find directory by path
+        DirectoryMetadata directoryMetadata = findBySecondId(oldPath);
 
-    // TODO : recursive
-    @Override
-    public DirectoryMetadata rename(String oldName, String newName) {
-        DirectoryMetadata directoryMetadata = findBySecondId(oldName);
-        directoryMetadata.setName(newName);
+        // change this direcotry
+        directoryMetadata.setName(PathResolver.getName(newPath));
+        directoryMetadata.setPathLower(newPath.toLowerCase());
+        directoryMetadata.setPathDisplay(newPath);
+
+        // get lists of children below
+        List<DirectoryMetadata> childrenList = getListOfChildren(directoryMetadata.getFolderId());
+        List<FileMetadata> filesList = getController().getFilesMetadataRepository().getListOfChildren(directoryMetadata.getFolderId());
+
+        // rename children
+        for (DirectoryMetadata child : childrenList){
+            rename(oldPath+"/"+child.getName(), newPath+"/"+child.getName());
+        }
+
+        for (FileMetadata child : filesList){
+            getController()
+                    .getFilesMetadataRepository()
+                    .rename(
+                            oldPath+"/"+child.getName(),
+                            newPath+"/"+child.getName()
+                    );
+        }
 
         update(directoryMetadata);
         return directoryMetadata;
@@ -104,12 +121,12 @@ public class DirectoryMetadataDAO extends MetadataDAO<DirectoryMetadata, FolderM
         return store( newDirectory );
     }
 
-    public DirectoryMetadata createDirectoryForUser(User user) {
+    public DirectoryMetadata createDirectoryForUser(String user) {
         DirectoryMetadata usersDirectory =
                 new DirectoryMetadata(
-                        user.getUserName(),
-                        user.getUserName().toLowerCase(),
-                        user.getUserName(),
+                        user,
+                        user.toLowerCase(),
+                        user,
                         0,  // root directory
                         time());
 
@@ -120,5 +137,33 @@ public class DirectoryMetadataDAO extends MetadataDAO<DirectoryMetadata, FolderM
             throw e;
         }
         return result;
+    }
+
+    @Override
+    public void delete(String path){
+        DirectoryMetadata object = findBySecondId(path);
+        delete(getId(object));
+    }
+
+
+    public void delete(Integer id){
+        List<DirectoryMetadata> childrenList = getListOfChildren(id);
+        List<FileMetadata> fileList = getController()
+                .getFilesMetadataRepository()
+                .getListOfChildren(id);
+
+        // order your children to kill theirs children and themselves
+        for ( DirectoryMetadata child : childrenList){
+            delete(getId(child));
+        }
+
+        // destroy your files
+        for ( FileMetadata child : fileList){
+            getController().getFilesMetadataRepository().delete(child);
+            getController().getFilesContentRepository().deleteById(child.getFileId());
+        }
+
+        // kill yourself
+        deleteById(id);
     }
 }

@@ -110,7 +110,7 @@ public class DropboksController {
         User result = null;
         try {
             result = usersRepo.store(potentialNewUser);
-            dirMetaRepo.createDirectoryForUser(result);
+            dirMetaRepo.createDirectoryForUser(result.getUserName());
         } catch (DataAccessException e){
             e.printStackTrace();
         }
@@ -167,7 +167,7 @@ public class DropboksController {
             return path_doesnt_exist;
         }
 
-        repo.deleteBySecondId(path);
+        repo.delete(path);
 
         response.status(SUCCESSFUL_DELETE_OPERATION);
         return success;
@@ -258,29 +258,33 @@ public class DropboksController {
         }
     }
 
-    // TODO
     public List<Object> getListFolderContent(Request request, Response response) {
-        final String path = request.splat()[0]; // path to directory
-        String tmp = request.queryMap().get("recursive").value(); // path to new directory
-        boolean recursive;
-        if (tmp.equals("true")){
-            recursive = true;
-        } else {
-            recursive = false;
-        }
-
-        DirectoryMetadata parentDirectory;
         try {
-            parentDirectory = dirMetaRepo.findBySecondId(path);
-        } catch (NullPointerException ex){
-            response.status(INVALID_PARAMETER);
-            return null;
+            final String path = request.splat()[0]; // path to directory
+            String tmp = request.queryMap().get("recursive").value(); // path to new directory
+            boolean recursive;
+            if (tmp.equals("true")) {
+                recursive = true;
+            } else {
+                recursive = false;
+            }
+
+            DirectoryMetadata parentDirectory;
+            try {
+                parentDirectory = dirMetaRepo.findBySecondId(path);
+            } catch (NullPointerException ex) {
+                response.status(INVALID_PARAMETER);
+                return null;
+            }
+
+            Integer directoryId = parentDirectory.getFolderId();
+
+            List<Object> metadataList = dirMetaRepo.getMetadataList(directoryId, recursive);
+            response.status(OK);
+            return metadataList;
+        } catch (Exception e){
+            e.printStackTrace();
         }
-
-        Integer directoryId = parentDirectory.getFolderId();
-
-        //List<Object> metadataList = dirMetaRepo.getMetadataWithChildren(directoryId, );
-        response.status(OK);
         return null;
     }
 
@@ -294,6 +298,14 @@ public class DropboksController {
 
     public static String getServerName() {
         return SERVER_NAME;
+    }
+
+    public FileContentDAO getFilesContentRepository() {
+        return filesContRepo;
+    }
+
+    public FileMetadataDAO getFilesMetadataRepository() {
+        return filesMetaRepo;
     }
 
     public MetadataDAO resolveMetaType(String path) throws InvalidParameterException{

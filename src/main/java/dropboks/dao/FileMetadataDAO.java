@@ -37,6 +37,21 @@ public class FileMetadataDAO extends MetadataDAO<FileMetadata, FileMetadataRecor
         return FILE_METADATA.ENCLOSING_FOLDER_ID;
     }
 
+    @Override
+    public FileMetadata getMetadataWithChildren(Integer id, List<FileMetadata> listOfChildren) {
+        return new FileMetadata(findById(id), listOfChildren);
+    }
+
+    @Override
+    public void delete(String path) {
+        FileMetadata object = findBySecondId(path);
+
+        //remove content
+        getController().getFilesContentRepository().deleteById(object.getFileId());
+
+        deleteBySecondId(path);
+    }
+
     // TODO : recursive
     @Override
     public FileMetadata move(String path, String newPath) {
@@ -51,15 +66,11 @@ public class FileMetadataDAO extends MetadataDAO<FileMetadata, FileMetadataRecor
     }
 
     @Override
-    public FileMetadata getMetaData(String path) {
-        return findBySecondId(path);
-    }
-
-    @Override
-    public FileMetadata rename(String oldName, String newName) {
-        FileMetadata fileMetadata = findBySecondId(oldName);
-
-
+    public FileMetadata rename(String oldPath, String newPath) {
+        FileMetadata fileMetadata = findBySecondId(oldPath);
+        fileMetadata.setName(PathResolver.getName(newPath));
+        fileMetadata.setPathDisplay(newPath);
+        fileMetadata.setPathLower(newPath.toLowerCase());
         update(fileMetadata);
         return fileMetadata;
     }
@@ -68,6 +79,7 @@ public class FileMetadataDAO extends MetadataDAO<FileMetadata, FileMetadataRecor
     protected Integer getId(FileMetadata object) {
         return object.getFileId();
     }
+
 
     public FileMetadata create(String pathToFile, TransferFile tmpFile) {
         return new FileMetadata(
@@ -82,4 +94,6 @@ public class FileMetadataDAO extends MetadataDAO<FileMetadata, FileMetadataRecor
         );
 
     }
+
+
 }
