@@ -1,8 +1,6 @@
 package dropboks.dao;
 
-import dropboks.DropboksController;
 import dropboks.PathResolver;
-import dropboks.TransferFile;
 import dropboks.model.FileMetadata;
 import org.jooq.TableField;
 import org.jooq.impl.TableImpl;
@@ -18,8 +16,8 @@ import static pl.edu.agh.kis.florist.db.tables.FileMetadata.FILE_METADATA;
  */
 public class FileMetadataDAO extends MetadataDAO<FileMetadata, FileMetadataRecord> {
 
-    public FileMetadataDAO(Class<FileMetadata> type, TableImpl<FileMetadataRecord> table, DropboksController controller) {
-        super(type, table, controller);
+    public FileMetadataDAO(Class<FileMetadata> type, TableImpl<FileMetadataRecord> table) {
+        super(type, table);
     }
 
     @Override
@@ -38,28 +36,16 @@ public class FileMetadataDAO extends MetadataDAO<FileMetadata, FileMetadataRecor
     }
 
     @Override
-    public FileMetadata getMetadataWithChildren(Integer id, List<FileMetadata> listOfChildren) {
+    public FileMetadata getMetadataWithChildren(Integer id, List<Object> listOfChildren) {
         return new FileMetadata(findById(id), listOfChildren);
     }
 
-    @Override
-    public void delete(String path) {
-        FileMetadata object = findBySecondId(path);
-
-        //remove content
-        getController().getFilesContentRepository().deleteById(object.getFileId());
-
-        deleteBySecondId(path);
-    }
 
     // TODO : recursive
     @Override
     public FileMetadata move(String path, String newPath) {
         FileMetadata record = this.findBySecondId(path);
 
-        Integer idOfDirectory = getController()
-                .getDirectoryMetadataRepository()
-                .getIdBySecondId(PathResolver.getParentPath(newPath));
 
 
         return record;
@@ -80,20 +66,18 @@ public class FileMetadataDAO extends MetadataDAO<FileMetadata, FileMetadataRecor
         return object.getFileId();
     }
 
-
-    public FileMetadata create(String pathToFile, TransferFile tmpFile) {
+    public FileMetadata create(String path, Integer parentFolderId, Integer size){
         return new FileMetadata(
-                PathResolver.getUserName(pathToFile),
-                pathToFile.toLowerCase(),
-                pathToFile,
-                tmpFile.size(),
+                PathResolver.getName(path),
+                path.toLowerCase(),
+                path,
+                size,
                 time(),
-                null,
-                getController().getDirectoryMetadataRepository().findBySecondId(PathResolver.getParentPath(pathToFile)).getFolderId()
-
-        );
-
+                parentFolderId
+                );
     }
 
-
+    public List getMetadataList(Integer id){
+        return getMetadataList(id, false);
+    }
 }

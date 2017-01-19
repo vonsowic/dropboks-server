@@ -1,5 +1,6 @@
 package dropboks.model;
 
+import dropboks.PathResolver;
 import dropboks.TransferFile;
 
 import java.sql.Timestamp;
@@ -27,6 +28,10 @@ public class FileMetadata extends pl.edu.agh.kis.florist.db.tables.pojos.FileMet
         super(null, name, pathLower, pathDisplay, size, serverCreatedAt, serverChangedAt, enclosingFolderId);
     }
 
+    public FileMetadata(String name, String pathLower, String pathDisplay, Integer size, Timestamp serverCreatedAt, Integer enclosingFolderId) {
+        super(null, name, pathLower, pathDisplay, size, serverCreatedAt, null, enclosingFolderId);
+    }
+
 
     public FileMetadata(FileMetadata value, TransferFile file) {
         super(value);
@@ -36,4 +41,5 @@ public class FileMetadata extends pl.edu.agh.kis.florist.db.tables.pojos.FileMet
     public FileMetadata getMetadataWithFile(TransferFile file){
         return new FileMetadata(this, file);
     }
+
 }

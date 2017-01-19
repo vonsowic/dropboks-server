@@ -25,23 +25,6 @@ public class User extends Users implements Comparable<Users>{
 
     private static final long serialVersionUID = -7821816371758851390L;
 
-    public User getUserWithHashedPassword() {
-        if ( this.getId() != null) {
-            return new User(
-                    this.getId(),
-                    this.getUserName(),
-                    this.getDisplayName(),
-                    App.createHashedPassword(this.getHashedPassword())
-            );
-        } else {
-            return new User(
-                    this.getUserName(),
-                    this.getDisplayName(),
-                    App.createHashedPassword(this.getHashedPassword()
-                    ));
-        }
-    }
-
     @Override
     public int compareTo(Users o) {
         if (this.getId() == o.getId())

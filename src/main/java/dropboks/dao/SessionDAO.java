@@ -1,6 +1,6 @@
 package dropboks.dao;
 
-import dropboks.DropboksController;
+import dropboks.controllers.DropboksController;
 import dropboks.model.Session;
 import org.jooq.Table;
 import org.jooq.TableField;
@@ -13,8 +13,8 @@ import static pl.edu.agh.kis.florist.db.Tables.SESSION_DATA;
  * Created by miwas on 17.01.17.
  */
 public class SessionDAO extends DAO<Session, SessionDataRecord, String> {
-    public SessionDAO(Class<Session> type, Table<SessionDataRecord> table, DropboksController controller) {
-        super(type, table, controller);
+    public SessionDAO(Class<Session> type, Table<SessionDataRecord> table) {
+        super(type, table);
     }
 
     @Override

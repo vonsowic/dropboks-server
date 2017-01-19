@@ -1,11 +1,8 @@
 package dropboks.dao;
 
-import dropboks.DropboksController;
-import dropboks.model.DirectoryMetadata;
 import org.jooq.DSLContext;
 import org.jooq.Table;
 import org.jooq.TableField;
-import org.jooq.exception.DataAccessException;
 import org.jooq.impl.DSL;
 import org.jooq.impl.UpdatableRecordImpl;
 
@@ -17,8 +14,8 @@ import java.util.List;
  */
 public abstract class MetadataDAO<T, R extends UpdatableRecordImpl<R>> extends DAO<T, R, String> {
 
-    protected MetadataDAO(Class type, Table table, DropboksController controller) {
-        super(type, table, controller);
+    protected MetadataDAO(Class type, Table table) {
+        super(type, table);
     }
 
     public abstract T move(String from, String to);
@@ -27,9 +24,7 @@ public abstract class MetadataDAO<T, R extends UpdatableRecordImpl<R>> extends D
 
     public abstract TableField<R, Integer> getParentIdTableRecord();
 
-    public abstract T getMetadataWithChildren(Integer id, List<T> listOfChildren);
-
-    public abstract void delete(String path);
+    public abstract T getMetadataWithChildren(Integer id, List<Object> listOfChildren);
 
     public List<T> getListOfChildren(Integer id){
         try (DSLContext create = DSL.using(DB_URL)) {

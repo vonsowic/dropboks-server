@@ -1,11 +1,12 @@
 package dropboks;
 
 import static spark.Spark.*;
+
+import dropboks.controllers.DropboksController;
 import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
-import spark.Request;
 import spark.ResponseTransformer;
 
 public class App {
@@ -26,7 +27,7 @@ public class App {
         //secure("deploy/keystore.jks", "password", null, null);
 		port(4567);
 
-        //before(FILES_PATH + "/*/*", controller::authenticate);
+        //before(FILES_PATH + "/*", controller::authenticate);
 
         get(FILES_PATH + "/*/list_folder_content", controller::getListFolderContent,json);
 
@@ -49,10 +50,6 @@ public class App {
         get(USERS_PATH + "/access", controller::access, json);
 
 	}
-
-    public static String createHashedPassword(String password) {
-        return BCrypt.hashpw(password, BCrypt.gensalt());
-    }
 }
 
 

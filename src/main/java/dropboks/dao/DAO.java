@@ -1,6 +1,5 @@
 package dropboks.dao;
 
-import dropboks.DropboksController;
 import org.jooq.*;
 import org.jooq.exception.DataAccessException;
 import org.jooq.impl.*;
@@ -9,7 +8,6 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -40,16 +38,11 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
      */
     private final TableImpl<Record> TABLE;
 
-    private DropboksController controller;
 
-
-
-    protected DAO( Class<T> type, Table<Record> table, DropboksController controller) {
+    protected DAO( Class<T> type, Table<Record> table) {
         super(table, type);
         this.type = type;
         TABLE = (TableImpl<Record>) table;
-        this.controller = controller;
-
         try {
             this.setConfiguration(new DefaultConfiguration().set(DriverManager.getConnection(DB_URL)).set(SQLDialect.SQLITE));
         } catch (SQLException e) {
@@ -189,7 +182,4 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
         return Timestamp.valueOf(LocalDateTime.now());
     }
 
-    public DropboksController getController() {
-        return controller;
-    }
 }

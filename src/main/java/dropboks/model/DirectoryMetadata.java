@@ -10,7 +10,7 @@ import java.util.List;
  */
 public class DirectoryMetadata extends FolderMetadata implements Recursion<DirectoryMetadata> {
 
-    List<DirectoryMetadata> listOfMetadata;
+    List<Object> listOfMetadata;
 
     public DirectoryMetadata(FolderMetadata value) {
         super(value);
@@ -24,13 +24,15 @@ public class DirectoryMetadata extends FolderMetadata implements Recursion<Direc
         super(null, name, pathLower, pathDisplay, parentFolderId, serverCreatedAt);
     }
 
-    public DirectoryMetadata(DirectoryMetadata value, List<DirectoryMetadata> list){
+    public DirectoryMetadata(DirectoryMetadata value, List<Object> list){
         super(value);
         this.listOfMetadata = list;
     }
 
+
     @Override
-    public DirectoryMetadata appendChildren(List<DirectoryMetadata> list) {
+    public DirectoryMetadata appendChildren(List list) {
         return new DirectoryMetadata(this, list);
+
     }
 }

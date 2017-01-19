@@ -1,7 +1,7 @@
 package dropboks.dao;
 
 import dropboks.App;
-import dropboks.DropboksController;
+import dropboks.controllers.DropboksController;
 import dropboks.model.User;
 import org.jooq.DSLContext;
 import org.jooq.TableField;
@@ -19,8 +19,8 @@ import static pl.edu.agh.kis.florist.db.Tables.USERS;
  */
 public class UsersDAO extends DAO<User, UsersRecord, String> {
 
-    public UsersDAO(Class type, TableImpl table, DropboksController controller) {
-        super(type, table, controller);
+    public UsersDAO(Class type, TableImpl table) {
+        super(type, table);
     }
 
     @Override
@@ -48,26 +48,4 @@ public class UsersDAO extends DAO<User, UsersRecord, String> {
             return users;
         }
     }
-
-    public User hashPassword(User user) throws DataAccessException{
-        try (DSLContext create = DSL.using(DB_URL)) {
-
-            System.out.println("Otrzymany uzytkownik to " );
-
-            UsersRecord record = create.fetchOne(USERS, USERS.ID.equal(user.getId()));
-            System.out.println("Otrzymany uzytkownik to " + record.getUserName());
-
-            record.setHashedPassword(
-                    App.createHashedPassword(
-                            user.getHashedPassword()
-                    )
-            );
-            record.store();
-            return record.into(User.class);
-        } catch (DataAccessException e){
-            throw e;
-        }
-
-    }
-
 }
