@@ -1,6 +1,5 @@
 package dropboks.dao;
 
-import dropboks.controllers.DropboksController;
 import dropboks.model.Session;
 import org.jooq.Table;
 import org.jooq.TableField;

@@ -16,4 +16,9 @@ public class Session extends SessionData {
     public Session(String sessionId, Integer userId, Timestamp lastAccessed) {
         super(sessionId, userId, lastAccessed);
     }
+
+    public Session(Integer userId, Timestamp lastAccessed) {
+
+    }
+
 }

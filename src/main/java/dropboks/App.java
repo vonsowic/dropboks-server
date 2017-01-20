@@ -3,15 +3,32 @@ package dropboks;
 import static spark.Spark.*;
 
 import dropboks.controllers.DropboksController;
+import dropboks.exceptions.AlreadyExistsException;
+import dropboks.exceptions.NoRecordForundInDatabaseException;
+import dropboks.exceptions.PermissionException;
+import org.jooq.exception.DataAccessException;
 import org.mindrot.jbcrypt.BCrypt;
+import org.omg.CORBA.DynAnyPackage.Invalid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import spark.ResponseTransformer;
 
+import javax.naming.AuthenticationException;
+import java.security.InvalidParameterException;
+import java.util.HashMap;
+import java.util.Map;
+
 public class App {
 
-	final static private Logger LOGGER = LoggerFactory.getILoggerFactory().getLogger("requests");
+    private static final int ALREADY_EXISTS = 400;
+    private static final int AUTHENTICATION_FAILURE = 401;
+    private static final int UNSUCCESSFUL_LOGIN = 403;
+    private static final int INVALID_PARAMETER = 405;
+    private static final int NOT_FOUND = 404;
+
+
+    final static private Logger LOGGER = LoggerFactory.getILoggerFactory().getLogger("requests");
 	
 	public static void main(String[] args) {
 
@@ -20,14 +37,24 @@ public class App {
 
         final Gson gson = new Gson();
 		final ResponseTransformer json = gson::toJson;
-
         DropboksController controller = new DropboksController();
 
+        Map<Class, Integer> exceptionMap = new HashMap<>();
+        exceptionMap.put(InvalidParameterException.class, INVALID_PARAMETER);
+        exceptionMap.put(AuthenticationException.class, UNSUCCESSFUL_LOGIN);
+        exceptionMap.put(NoRecordForundInDatabaseException.class, INVALID_PARAMETER);
+        exceptionMap.put(DataAccessException.class, NOT_FOUND);
+        exceptionMap.put(AlreadyExistsException.class, ALREADY_EXISTS);
+        exceptionMap.put(PermissionException.class, AUTHENTICATION_FAILURE);
+
+
         // enable https
-        //secure("deploy/keystore.jks", "password", null, null);
+        secure("deploy/keystore.jks", "password", null, null);
 		port(4567);
 
-        //before(FILES_PATH + "/*", controller::authenticate);
+        //threadPool(10, 0, 30*1000);
+
+        before(FILES_PATH + "/*", controller::authenticate);
 
         get(FILES_PATH + "/*/list_folder_content", controller::getListFolderContent,json);
 
@@ -49,7 +76,13 @@ public class App {
 
         get(USERS_PATH + "/access", controller::access, json);
 
-	}
+        exception(Exception.class, (ex, request, response) -> {
+            ex.printStackTrace();
+            response.status(exceptionMap.get(ex.getClass()));
+            response.body(gson.toJson(ex.getMessage()));
+        });
+
+    }
 }
 
 

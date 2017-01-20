@@ -5,18 +5,23 @@ import dropboks.exceptions.AlreadyExistsException;
 import dropboks.exceptions.NoRecordForundInDatabaseException;
 import dropboks.PathResolver;
 import dropboks.TransferFile;
+import dropboks.exceptions.PermissionException;
 import dropboks.model.*;
+import dropboks.model.Session;
 import org.jooq.exception.DataAccessException;
 
-import spark.Request;
-import spark.Response;
+import spark.*;
 
 import javax.naming.AuthenticationException;
 import java.security.InvalidParameterException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import static spark.Spark.halt;
-
+import static spark.Spark.threadPool;
 
 /**
  * Main controller
@@ -29,16 +34,15 @@ public class DropboksController {
     private static final int OK = 200;
     private static final int CREATED = 201;
     private static final int SUCCESSFUL_DELETE_OPERATION = 204;
-    private static final int ALREADY_EXISTS = 400;
-    private static final int AUTHENTICATION_FAILURE = 401;
-    private static final int UNSUCCESSFUL_LOGIN = 403;
-    private static final int NOT_FOUND = 404;
     private static final int INVALID_PARAMETER = 405;
 
     private static final String path_doesnt_exist = "Path doesn't exist";
     private static final String already_exists = "Already exists";
     private static final String success = "Success";
     private static final String error = "Error :(";
+    private static final String session_id_cookie = "session_id";
+
+    private int expire_time = 10;
 
     private final Gson gson = new Gson();
 
@@ -52,129 +56,101 @@ public class DropboksController {
         directoryFileController = new DirectoryFileController();
     }
 
-    //TODO: get password
-    public void authenticate(Request request, Response response) {
+    public void authenticate(Request request, Response response) throws NoRecordForundInDatabaseException, PermissionException {
         String userName = PathResolver.getUserName(request.splat()[0]); // get user name
 
-        // get session
-        request.queryMap().get("session").value();
+        String cookie = request.cookie( session_id_cookie );
+        if ( cookie == null ){
+            throw new PermissionException("You are not logged in. Cookie doesnt exist");
+        }
 
-        try{
-            userController.authanticate(userName, null);
-        } catch (NoRecordForundInDatabaseException e){
-            halt(NOT_FOUND, e.getMessage());
-        } catch (AuthenticationException e){
-            halt(AUTHENTICATION_FAILURE, e.getMessage());
+        userController.authenticate(userName, cookie);
+        response.status(OK);
+    }
+
+    public Session access(Request request, Response response) throws AuthenticationException {
+        try {
+            String header = request.headers("Authorization");
+            header = header.split(" ")[1];  // remove "Basic "
+
+            String[] tmp =new String(Base64.getDecoder()
+                    .decode(header.getBytes()))
+                    .split(Pattern.quote(":"));
+
+            spark.Session session = request.session(true);
+            Session result = userController.login(tmp[0], tmp[1], session);
+
+            response.cookie(session_id_cookie, session.id(), expire_time, true);
+            response.status(OK);
+            return result;
+        } catch (ArrayIndexOutOfBoundsException e) {
+            throw new AuthenticationException("Sth with regex went wrong");
+        } catch (AuthenticationException e) {
+            throw e;
         }
     }
 
-    public Object createNewUser(Request request, Response response){
+    public Object logout(Request request, Response response) throws AuthenticationException {
+        return null;
+    }
+
+    public Object createNewUser(Request request, Response response) throws NoRecordForundInDatabaseException, InvalidParameterException, DataAccessException{
         User potentialNewUser = gson.fromJson(request.body(), User.class);
-        User result;
-        try{
-            result = userController.createUser(potentialNewUser);
-            directoryFileController.createDirectoryForUser(result.getUserName());
-        } catch (AlreadyExistsException | NoRecordForundInDatabaseException e){
-            response.status(ALREADY_EXISTS);
-            return e.getMessage();
-        } catch (DataAccessException e){
-            e.printStackTrace();
-            return e.toString();
-        }
+        User result = userController.createUser(potentialNewUser);
+        directoryFileController.createDirectoryForUser(result.getUserName());
+
         response.status(CREATED);
         return result;
     }
 
-    public Object createDirectory(Request request, Response response) {
+    public Object createDirectory(Request request, Response response) throws AlreadyExistsException, NoRecordForundInDatabaseException {
         String path = request.splat()[0];  // path to new Directory
-        DirectoryMetadata directoryMetadata;
-        try {
-            directoryMetadata = directoryFileController.createDirectory(path);
-        } catch (AlreadyExistsException e){
-            response.status(ALREADY_EXISTS);
-            return e.toString();
-        } catch (NoRecordForundInDatabaseException e){
-            response.status(INVALID_PARAMETER);
-            return e.toString();
-        }
+        DirectoryMetadata directoryMetadata = directoryFileController.createDirectory(path);
         response.status(CREATED);
         return directoryMetadata;
     }
 
-    public Object rename(Request request, Response response)  {
+    public Object rename(Request request, Response response) throws NoRecordForundInDatabaseException {
         final String path = request.splat()[0]; // path to old directory or file
         String newName = PathResolver.getParentPath(path) + "/" + request.queryMap().get("new_name").value(); // path to new directory
-
-        try {
-            directoryFileController.rename(path, newName);
-        } catch (NoRecordForundInDatabaseException e){
-            response.status(INVALID_PARAMETER);
-            return e.getMessage();
-        }
+        directoryFileController.rename(path, newName);
         response.status(CREATED);
         return "OK";
     }
 
-    public Object remove(Request request, Response response) {
+    public Object remove(Request request, Response response) throws InvalidParameterException, NoRecordForundInDatabaseException{
         final String path = request.splat()[0]; // path to directory or file
-        try {
-            directoryFileController.delete(path);
-        } catch (InvalidParameterException | NoRecordForundInDatabaseException e){
-            response.status(INVALID_PARAMETER);
-            return e.getMessage();
-        }
+        directoryFileController.delete(path);
         response.status(SUCCESSFUL_DELETE_OPERATION);
         return success;
     }
 
-    public Object getMetaData(Request request, Response response) {
+    public Object getMetaData(Request request, Response response) throws NoRecordForundInDatabaseException{
         final String path = request.splat()[0]; // path to directory
         Object record;
-        try {
-            record = directoryFileController.getMetaData(path);
-        } catch (InvalidParameterException e) {
-            response.status(INVALID_PARAMETER);
-            return path_doesnt_exist;
-        }
-
+        record = directoryFileController.getMetaData(path);
         response.status(OK);
         return record;
     }
 
-    public Object uploadFile(Request request, Response response) {
+    public Object uploadFile(Request request, Response response) throws InvalidParameterException{
         String pathToFile = request.queryMap().get("path").value();
         TransferFile tmpFile = gson.fromJson(request.body(), TransferFile.class);
-
         FileMetadata result;
-        try {
-            result = directoryFileController.uploadFile(pathToFile, tmpFile);
-        } catch (InvalidParameterException e){
-            response.status(INVALID_PARAMETER);
-            return e.getMessage();
-        }
+        result = directoryFileController.uploadFile(pathToFile, tmpFile);
 
         response.status(CREATED);
         return result;
     }
 
-    public Object move(Request request, Response response) {
+    public Object move(Request request, Response response) throws InvalidParameterException {
         final String path = request.splat()[0]; // path to directory or file
         String newPath = request.queryMap().get("new_path").value(); // path to new directory
 
-        Object result;
-        try {
-            result = directoryFileController.move(path, newPath);
-        } catch (InvalidParameterException e){
-            response.status(INVALID_PARAMETER);
-            return e.getMessage();
-        }
+        Object result = directoryFileController.move(path, newPath);
+
         response.status(OK);
         return result;
-    }
-
-    //TODO: all
-    public Object access(Request request, Response response) {
-        return null;
     }
 
     public Object download(Request request, Response response) {
@@ -191,7 +167,7 @@ public class DropboksController {
         return file;
     }
 
-    public List<Object> getListFolderContent(Request request, Response response) {
+    public List<Object> getListFolderContent(Request request, Response response) throws InvalidParameterException{
         final String path = request.splat()[0]; // path to directory
         String tmp = request.queryMap().get("recursive").value(); // path to new directory
         boolean recursive;
@@ -201,13 +177,8 @@ public class DropboksController {
             recursive = false;
         }
 
-        List metadataList;
-        try {
-            metadataList = directoryFileController.getListFolderContent(path, recursive);
-        } catch (InvalidParameterException e){
-            response.status(NOT_FOUND);
-            return null;
-        }
+        List metadataList = directoryFileController.getListFolderContent(path, recursive);
+
         response.status(OK);
         return metadataList;
     }

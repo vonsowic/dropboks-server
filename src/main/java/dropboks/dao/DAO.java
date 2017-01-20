@@ -8,6 +8,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -93,7 +94,6 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
      * @deprecated
     */
     public Integer generateId(){
-        /*
         ArrayList<T> list = (ArrayList<T>) loadAll();
         Integer id = 0;
         for(T object : list){
@@ -102,8 +102,6 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
             }
         }
         return id+1;
-        */
-       return null;
     }
 
 
@@ -126,6 +124,10 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
      * @see @DataAccessException
      */
     public T findBySecondId(SK key) throws DataAccessException{
+        if (!existsBySecondId(key)){
+            throw new DataAccessException("Not found in database");
+        }
+
         try (DSLContext create = DSL.using(DB_URL)) {
             Record record = create.selectFrom(TABLE)
                     .where(getSecondIdOfTableRecord()
