@@ -124,10 +124,6 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
      * @see @DataAccessException
      */
     public T findBySecondId(SK key) throws DataAccessException{
-        if (!existsBySecondId(key)){
-            throw new DataAccessException("Not found in database");
-        }
-
         try (DSLContext create = DSL.using(DB_URL)) {
             Record record = create.selectFrom(TABLE)
                     .where(getSecondIdOfTableRecord()
@@ -136,6 +132,8 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
 
             T object = record.into(this.type);
             return object;
+        } catch (NullPointerException e){
+            throw new DataAccessException("Not found in database");
         }
     }
 
@@ -159,7 +157,7 @@ public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
      * Removes object based on second key from database.
      * @param key is second key to object in Database
      */
-    public void deleteBySecondId(SK key) {
+    public void deleteBySecondId(SK key) throws DataAccessException{
         try (DSLContext create = DSL.using(DB_URL)) {
             create.delete(TABLE).where(getSecondIdOfTableRecord().equal(key)).execute();
         }

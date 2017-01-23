@@ -7,8 +7,6 @@ import dropboks.exceptions.AlreadyExistsException;
 import dropboks.exceptions.NoRecordForundInDatabaseException;
 import dropboks.exceptions.PermissionException;
 import org.jooq.exception.DataAccessException;
-import org.mindrot.jbcrypt.BCrypt;
-import org.omg.CORBA.DynAnyPackage.Invalid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
@@ -22,7 +20,7 @@ import java.util.Map;
 public class App {
 
     private static final int ALREADY_EXISTS = 400;
-    private static final int AUTHENTICATION_FAILURE = 401;
+    private static final int AUTHENTICATION_REQUIRED = 401;
     private static final int UNSUCCESSFUL_LOGIN = 403;
     private static final int INVALID_PARAMETER = 405;
     private static final int NOT_FOUND = 404;
@@ -45,7 +43,9 @@ public class App {
         exceptionMap.put(NoRecordForundInDatabaseException.class, INVALID_PARAMETER);
         exceptionMap.put(DataAccessException.class, NOT_FOUND);
         exceptionMap.put(AlreadyExistsException.class, ALREADY_EXISTS);
-        exceptionMap.put(PermissionException.class, AUTHENTICATION_FAILURE);
+        exceptionMap.put(PermissionException.class, AUTHENTICATION_REQUIRED);
+        exceptionMap.put(null, NOT_FOUND);
+
 
 
         // enable https

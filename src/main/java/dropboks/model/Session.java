@@ -13,8 +13,8 @@ public class Session extends SessionData {
         super(value);
     }
 
-    public Session(String sessionId, Integer userId, Timestamp lastAccessed) {
-        super(sessionId, userId, lastAccessed);
+    public Session(Integer userId, String sessionId, Timestamp lastAccessed) {
+        super(userId, sessionId, lastAccessed);
     }
 
     public Session(Integer userId, Timestamp lastAccessed) {
