@@ -1,0 +1,10 @@
+dropboks
+dropboks.controllers
+dropboks.dao
+dropboks.exceptions
+dropboks.htmlpage
+dropboks.model
+pl.edu.agh.kis.florist.db
+pl.edu.agh.kis.florist.db.tables
+pl.edu.agh.kis.florist.db.tables.pojos
+pl.edu.agh.kis.florist.db.tables.records
