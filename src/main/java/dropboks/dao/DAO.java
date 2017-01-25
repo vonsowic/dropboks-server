@@ -16,8 +16,8 @@ import java.util.List;
  * SK - Second Key.
  * @author miwas
  * @version 1.0
- * @see @https://www.jooq.org/doc/3.9/manual/sql-execution/daos/
- * @see @https://www.jooq.org/javadoc/3.5.0/org/jooq/impl/DAOImpl.html
+ * @see {https://www.jooq.org/doc/3.9/manual/sql-execution/daos/ , https://www.jooq.org/javadoc/3.5.0/org/jooq/impl/DAOImpl.html}
+ * {@inheritDoc}
  */
 public abstract class DAO<T, Record extends UpdatableRecordImpl<Record>, SK>
         extends DAOImpl<Record, T, Integer> {

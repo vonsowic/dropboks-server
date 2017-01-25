@@ -17,8 +17,6 @@ import java.security.InvalidParameterException;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import static spark.Spark.halt;
-import static spark.Spark.threadPool;
 
 /**
  * Main controller
@@ -54,15 +52,14 @@ public class DropboksController {
     }
 
     public void authenticate(Request request, Response response) throws NoRecordForundInDatabaseException, PermissionException {
-        String userName = new String(PathResolver.getUserName(request.splat()[0])); // get user name
+        String userName = PathResolver.getUserName(request.splat()[0]); // get user name
 
-        // i know its terrible solution to resolving path, but deadline ;)
+        // I know its terrible solution to resolving path, but deadline ;)
         if (userName.equals("upload")){
             userName = PathResolver.getUserName(request.queryMap().get("path").value());
         }
 
-        String cookie = new String(request.cookie( session_id_cookie ));
-        System.out.println("Cookie w body: " +cookie);
+        String cookie = request.cookie(session_id_cookie);
         if ( cookie == null ){
             throw new PermissionException("You are not logged in. Cookie doesnt exist");
         }
@@ -93,8 +90,12 @@ public class DropboksController {
         }
     }
 
-    public Object logout(Request request, Response response) throws AuthenticationException {
-        return null;
+    public Object logout(Request request, Response response) throws AuthenticationException, DataAccessException {
+        spark.Session session = request.session(true);
+        userController.logout(session.id());
+        response.cookie(session_id_cookie, session.id(), 0, true);
+        response.status(OK);
+        return success;
     }
 
     public Object createNewUser(Request request, Response response) throws NoRecordForundInDatabaseException, InvalidParameterException, DataAccessException{
@@ -189,4 +190,6 @@ public class DropboksController {
         response.status(OK);
         return metadataList;
     }
+
 }
+

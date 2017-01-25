@@ -90,6 +90,10 @@ public class UserController {
             return sessionRepo.store(sessionToDb);
     }
 
+    public void logout(String id) throws DataAccessException{
+        sessionRepo.deleteBySecondId(id);
+    }
+
 
     private class SetExpireTime implements Runnable{
 

@@ -22,11 +22,13 @@
     <orderEntry type="library" name="Gradle: com.google.code.gson:gson:2.8.0" level="project" />
     <orderEntry type="library" name="Gradle: com.sparkjava:spark-core:2.5.4" level="project" />
     <orderEntry type="library" name="Gradle: de.svenkubiak:jBCrypt:0.4.1" level="project" />
+    <orderEntry type="library" name="Gradle: com.sparkjava:spark-template-mustache:2.3" level="project" />
     <orderEntry type="library" name="Gradle: ch.qos.logback:logback-core:1.0.13" level="project" />
     <orderEntry type="library" name="Gradle: org.eclipse.jetty:jetty-server:9.3.6.v20151106" level="project" />
     <orderEntry type="library" name="Gradle: org.eclipse.jetty:jetty-webapp:9.3.6.v20151106" level="project" />
     <orderEntry type="library" name="Gradle: org.eclipse.jetty.websocket:websocket-server:9.3.6.v20151106" level="project" />
     <orderEntry type="library" name="Gradle: org.eclipse.jetty.websocket:websocket-servlet:9.3.6.v20151106" level="project" />
+    <orderEntry type="library" name="Gradle: com.github.spullara.mustache.java:compiler:0.9.0" level="project" />
     <orderEntry type="library" name="Gradle: javax.servlet:javax.servlet-api:3.1.0" level="project" />
     <orderEntry type="library" name="Gradle: org.eclipse.jetty:jetty-http:9.3.6.v20151106" level="project" />
     <orderEntry type="library" name="Gradle: org.eclipse.jetty:jetty-io:9.3.6.v20151106" level="project" />
