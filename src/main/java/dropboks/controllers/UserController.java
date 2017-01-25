@@ -12,6 +12,7 @@ import org.mindrot.jbcrypt.BCrypt;
 
 import javax.naming.AuthenticationException;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 import static pl.edu.agh.kis.florist.db.tables.SessionData.SESSION_DATA;
@@ -41,22 +42,21 @@ public class UserController {
     public void authenticate(String userName, String cookie)
             throws NoRecordForundInDatabaseException, PermissionException{
 
-        User user;
+        Integer userId;
         try {
-            user = usersRepo.findBySecondId(userName);
+            userId = usersRepo.getIdBySecondId(userName);
         } catch (DataAccessException e){
             throw new NoRecordForundInDatabaseException("I'm sorry to say you aren't exist.");
         }
 
         Session session;
         try {
-            session = sessionRepo.findBySecondId(cookie);
+            session = new Session(sessionRepo.findBySecondId(cookie));
         } catch (DataAccessException e){
             throw new NoRecordForundInDatabaseException("You need to log in");
         }
 
-
-        if ( !session.getUserId().equals(user.getId())){
+        if ( !session.getUserId().equals(userId)){
             throw new PermissionException("You have no right to this place!!!!!!!!");
         }
     }
@@ -77,31 +77,21 @@ public class UserController {
         return BCrypt.hashpw(password, BCrypt.gensalt());
     }
 
-    public Session login(String userName, String password, spark.Session session) throws AuthenticationException{
-        try {
+    public Session login(String userName, String password, String sessionId, int expireTime) throws AuthenticationException{
+
             User user = usersRepo.findBySecondId(userName);
-            String sessionId = session.id();
 
             if ( !checkPassword(password, user.getHashedPassword())){
-                session.removeAttribute(userName);
                 throw new AuthenticationException("Your password could be a little bit more correct.");
             }
 
-
-            try {
-                if ( sessionRepo.existsById(user.getId()))
-                    return sessionRepo.findById(user.getId());
-            } catch (Exception e){
-            }
-
-            Session sessionToDb = new Session(sessionId, user.getId(), sessionRepo.time());
-            //new SetExpireTime(user, session, 10000);
+            new Thread(new SetExpireTime(user, null, expireTime)).start();
+            Session sessionToDb = new Session(user.getId(), sessionId, sessionRepo.time());
             return sessionRepo.store(sessionToDb);
+    }
 
-        } catch (DataAccessException | NullPointerException e){
-            e.printStackTrace();
-            throw new AuthenticationException("User doesn't exist");
-        }
+    public void logout(String id) throws DataAccessException{
+        sessionRepo.deleteBySecondId(id);
     }
 
 
@@ -114,25 +104,22 @@ public class UserController {
         public SetExpireTime(User user, spark.Session session, long time) {
             this.user =user;
             this.session = session;
-            this.time = time;
+            this.time = time*1000;
         }
 
         @Override
         public void run() {
-            Date date = new Date();
-            System.out.println("ROZPOCZYNAM NOWA SESJE");
-            while ( date.getTime()-session.lastAccessedTime() < time){
+            System.out.println("USER: "+ user.getUserName() + ": login at: "+ LocalDateTime.now());
+            do {
                 try {
                     Thread.sleep(10000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-
-                System.out.println("ROZPOCZYNAM NOWA SESJE".toLowerCase());
-
-            }
-            session.removeAttribute(user.getUserName());
+                System.out.println("USER: " + user.getUserName() + ": " + (time - new Date().getTime()+session.lastAccessedTime()) + " miliseconds left");
+            } while ( new Date().getTime()-session.lastAccessedTime() < time);
             sessionRepo.deleteById(user.getId());
+            System.out.println("USER: " + user.getUserName() + " logout at:" + LocalDateTime.now());
         }
     }
 }
